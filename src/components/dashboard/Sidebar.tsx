@@ -6,7 +6,6 @@ import {
     Settings,
     Users,
     Plus,
-    Tag,
     X,
     ChevronDown,
     FolderOpen,
@@ -37,7 +36,7 @@ const bottomNavItems = [
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
     const location = useLocation();
     const navigate = useNavigate();
-    const { tags, boards, organizations, currentOrganization, setCurrentOrganization, createBoard } = useBoards();
+    const { tags, boards, currentOrganization, createBoard } = useBoards();
 
     const handleNewBoard = () => {
         const board = createBoard('Untitled Board');

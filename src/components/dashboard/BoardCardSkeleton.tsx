@@ -1,5 +1,4 @@
 import { Skeleton } from '../ui/skeleton';
-import { cn } from '../../lib/utils';
 
 interface BoardCardSkeletonProps {
     viewMode?: 'grid' | 'list';

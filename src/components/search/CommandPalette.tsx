@@ -18,11 +18,9 @@ import {
     Settings,
     Users,
     Plus,
-    Tag,
     ExternalLink,
 } from 'lucide-react';
 import { useBoards } from '../../contexts/BoardContext';
-import { cn } from '../../lib/utils';
 
 interface CommandPaletteProps {
     open: boolean;

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { LayoutGrid, List, SortAsc, Filter } from 'lucide-react';
+import { LayoutGrid, List, SortAsc } from 'lucide-react';
 import type { Board } from '../../types';
 import { BoardCard } from './BoardCard';
 import { BoardCardSkeleton } from './BoardCardSkeleton';

@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState } from 'react';
+import type { ReactNode } from 'react';
 import type { Board, Tag, Organization } from '../types';
 import { mockBoards, mockTags, mockOrganizations, mockDeletedBoards } from '../data/mockData';
 import { generateId } from '../lib/utils';
