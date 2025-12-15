@@ -1,0 +1,40 @@
+import { ReactNode, useState } from 'react';
+import { Sidebar } from './Sidebar';
+import { DashboardHeader } from './DashboardHeader';
+import { CommandPalette } from '../search/CommandPalette';
+
+interface DashboardLayoutProps {
+    children: ReactNode;
+}
+
+export function DashboardLayout({ children }: DashboardLayoutProps) {
+    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+
+    return (
+        <div className="min-h-screen bg-slate-50">
+            {/* Sidebar */}
+            <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
+            {/* Main Content */}
+            <div className={`transition-all duration-300 ${sidebarOpen ? 'lg:ml-64' : 'ml-0'}`}>
+                {/* Header */}
+                <DashboardHeader
+                    onMenuClick={() => setSidebarOpen(!sidebarOpen)}
+                    onSearchClick={() => setCommandPaletteOpen(true)}
+                />
+
+                {/* Page Content */}
+                <main className="p-4 md:p-6 lg:p-8">
+                    {children}
+                </main>
+            </div>
+
+            {/* Command Palette */}
+            <CommandPalette
+                open={commandPaletteOpen}
+                onOpenChange={setCommandPaletteOpen}
+            />
+        </div>
+    );
+}

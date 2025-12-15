@@ -1,0 +1,127 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base Styles */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply font-sans antialiased bg-slate-50 text-slate-900;
+  }
+
+  ::selection {
+    @apply bg-primary-200 text-primary-900;
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-primary-500 outline-offset-2;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-slate-100;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-slate-300 rounded;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-slate-400;
+  }
+}
+
+/* Custom Components */
+@layer components {
+  .glass {
+    @apply bg-white/80 backdrop-blur-xl;
+  }
+
+  .glass-dark {
+    @apply bg-slate-900/80 backdrop-blur-xl;
+  }
+
+  .gradient-primary {
+    @apply bg-gradient-to-br from-primary-500 to-primary-700;
+  }
+
+  .gradient-accent {
+    @apply bg-gradient-to-br from-accent-400 to-accent-600;
+  }
+
+  .gradient-mesh {
+    background:
+      radial-gradient(at 40% 20%, theme('colors.primary.100') 0px, transparent 50%),
+      radial-gradient(at 80% 0%, theme('colors.accent.100') 0px, transparent 50%),
+      radial-gradient(at 0% 50%, theme('colors.primary.50') 0px, transparent 50%),
+      radial-gradient(at 80% 50%, theme('colors.accent.50') 0px, transparent 50%),
+      radial-gradient(at 0% 100%, theme('colors.primary.100') 0px, transparent 50%);
+  }
+
+  .text-gradient {
+    @apply bg-gradient-to-r from-primary-600 to-accent-500 bg-clip-text text-transparent;
+  }
+
+  .skeleton {
+    @apply bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%] animate-pulse;
+  }
+
+  .board-card {
+    @apply transition-all duration-200;
+  }
+
+  .board-card:hover {
+    @apply -translate-y-1 shadow-medium;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 font-medium transition-all cursor-pointer;
+  }
+
+  .btn:active {
+    @apply scale-[0.98];
+  }
+
+  .draw-line {
+    stroke-dasharray: 1000;
+    stroke-dashoffset: 1000;
+  }
+
+  .draw-line.animate {
+    animation: draw 1.5s ease-out forwards;
+  }
+
+  .floating {
+    @apply animate-float;
+  }
+
+  .floating-delay-1 {
+    animation-delay: 0.5s;
+  }
+
+  .floating-delay-2 {
+    animation-delay: 1s;
+  }
+
+  .floating-delay-3 {
+    animation-delay: 1.5s;
+  }
+}
+
+/* Keyframes for draw animation */
+@keyframes draw {
+  from {
+    stroke-dashoffset: 1000;
+  }
+
+  to {
+    stroke-dashoffset: 0;
+  }
+}
