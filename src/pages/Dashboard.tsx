@@ -145,7 +145,6 @@ export function Dashboard() {
                 ? "Create a new board and add this tag to it."
                 : "Ready to bring your ideas to life? Create your first board or start from a template."
             }
-            onCreateBoard={handleNewBoard}
           />
         </div>
 

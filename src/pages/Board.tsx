@@ -59,7 +59,7 @@ export function Board() {
       shapeUtils: defaultShapeUtils,
     })
   );
-  const saveTimeoutRef = useRef<number>();
+  const saveTimeoutRef = useRef<number | undefined>(undefined);
 
   const board = boards.find((b) => b.id === id);
 
