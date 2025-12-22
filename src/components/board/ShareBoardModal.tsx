@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Users, X, Mail, Loader2, Trash2, Crown, Edit, Eye } from 'lucide-react';
+import { Users, Mail, Loader2, Trash2, Crown, Edit, Eye } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';

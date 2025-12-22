@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Menu, Search, Bell, Plus, Command, Sparkles, LogOut, Settings, Users, ChevronRight, HelpCircle } from 'lucide-react';
+import { Menu, Search, Bell, Command, Sparkles, LogOut, Settings, Users, ChevronRight, HelpCircle } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Badge } from '../ui/badge';
@@ -7,8 +7,6 @@ import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
 import { useAuth } from '../../contexts/AuthContext';
@@ -23,12 +21,6 @@ interface DashboardHeaderProps {
 export function DashboardHeader({ onMenuClick, onSearchClick }: DashboardHeaderProps) {
     const navigate = useNavigate();
     const { user, logout } = useAuth();
-    const { createBoard } = useBoards();
-
-    const handleNewBoard = async () => {
-        const board = await createBoard('Untitled Board');
-        navigate(`/board/${board.id}`);
-    };
 
     const handleLogout = async () => {
         await logout();

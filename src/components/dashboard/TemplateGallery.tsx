@@ -19,13 +19,6 @@ interface TemplateGalleryProps {
     onOpenChange: (open: boolean) => void;
 }
 
-const categoryIcons: Record<string, React.ReactNode> = {
-    general: <Sparkles className="w-4 h-4" />,
-    education: <GraduationCap className="w-4 h-4" />,
-    business: <Briefcase className="w-4 h-4" />,
-    creative: <Palette className="w-4 h-4" />,
-};
-
 const templateIcons: Record<string, React.ReactNode> = {
     'template-blank': <LayoutGrid className="w-8 h-8" />,
     'template-math': <span className="text-2xl">∑</span>,
@@ -81,8 +74,6 @@ export function TemplateGallery({ open, onOpenChange }: TemplateGalleryProps) {
     };
 
     const previewedTemplate = templates.find(t => t.id === previewTemplate);
-
-    const categories = ['general', 'education', 'business', 'creative'];
 
     // Reset selection when dialog opens
     useEffect(() => {

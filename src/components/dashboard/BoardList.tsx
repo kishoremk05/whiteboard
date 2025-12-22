@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { LayoutGrid, List, SortAsc, Filter, Check, ArrowUp } from 'lucide-react';
+import { LayoutGrid, List, SortAsc, Check, ArrowUp } from 'lucide-react';
 import type { Board } from '../../types';
 import { BoardCard } from './BoardCard';
 import { BoardCardSkeleton } from './BoardCardSkeleton';
@@ -21,7 +21,6 @@ interface BoardListProps {
     emptyTitle?: string;
     emptyDescription?: string;
     emptyIcon?: React.ReactNode;
-    onCreateBoard?: () => void | Promise<void>;
 }
 
 type SortOption = 'updated' | 'created' | 'name';
@@ -35,7 +34,6 @@ export function BoardList({
     emptyTitle = 'No boards yet',
     emptyDescription = 'Create your first board to get started.',
     emptyIcon,
-    onCreateBoard,
 }: BoardListProps) {
     const [viewMode, setViewMode] = useState<ViewMode>('grid');
     const [sortBy, setSortBy] = useState<SortOption>('updated');

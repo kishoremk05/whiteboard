@@ -164,7 +164,7 @@ export function useBroadcastPresence(
     channel
         .on('presence', { event: 'sync' }, () => {
             const state = channel.presenceState();
-            onPresenceSync(state as Record<string, { cursor_x: number; cursor_y: number; name: string }[]>);
+            onPresenceSync(state as unknown as Record<string, { cursor_x: number; cursor_y: number; name: string }[]>);
         })
         .subscribe(async (status) => {
             if (status === 'SUBSCRIBED') {

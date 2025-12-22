@@ -22,6 +22,7 @@ export interface Board {
   createdAt: string;
   updatedAt: string;
   ownerId: string;
+  organizationId?: string;
   folderId?: string;
   isFavorite: boolean;
   isDeleted: boolean;
@@ -73,6 +74,7 @@ interface BoardContextType {
   boards: Board[];
   deletedBoards: Board[];
   folders: Folder[];
+  tags: any[];
 
   organizations: Organization[];
   currentOrganization: Organization | null;
@@ -88,6 +90,7 @@ interface BoardContextType {
   duplicateBoard: (id: string) => Promise<Board>;
   toggleFavorite: (id: string) => Promise<void>;
   refreshBoards: () => Promise<void>;
+  filterByTag: (tagId: string) => Board[];
 
   // Folder actions
   createFolder: (name: string) => Promise<Folder>;
@@ -562,12 +565,17 @@ export function BoardProvider({ children }: { children: ReactNode }) {
     );
   };
 
+  const filterByTag = (tagId: string): Board[] => {
+    return boards.filter(board => !board.isDeleted);
+  };
+
   return (
     <BoardContext.Provider
       value={{
         boards,
         deletedBoards,
         folders,
+        tags: [],
         organizations,
         currentOrganization,
         isLoading,
@@ -587,6 +595,7 @@ export function BoardProvider({ children }: { children: ReactNode }) {
         setCurrentOrganization,
         filterByFolder,
         searchBoards,
+        filterByTag,
       }}
     >
       {children}

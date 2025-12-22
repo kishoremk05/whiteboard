@@ -48,9 +48,9 @@ export function Board() {
             // Fetch collaborators
             loadCollaborators();
         }
-    }, [board]);
+    }, [board, loadCollaborators]);
 
-    const loadCollaborators = async () => {
+    const loadCollaborators = useCallback(async () => {
         if (!id) return;
         try {
             const data = await fetchCollaborators(id);
@@ -58,7 +58,7 @@ export function Board() {
         } catch (error) {
             console.error('Error loading collaborators:', error);
         }
-    };
+    }, [id]);
 
     // Load initial content from database
     useEffect(() => {

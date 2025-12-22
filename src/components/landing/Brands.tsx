@@ -1,19 +1,4 @@
 export function Brands() {
-    // Duplicated for seamless loop
-    const brands = [
-        "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Notion-logo.svg/2048px-Notion-logo.svg.png",
-        "https://upload.wikimedia.org/wikipedia/commons/3/33/Figma-logo.svg",
-        "https://assets-global.website-files.com/6257adef93867e56f84d3092/6259ce84838d7211516e3c0f_Linear_Logo_White.svg", // Linear
-        "https://assets.vercel.com/image/upload/v1662130559/nextjs/Icon_light_background.png", // Nextjs
-        "https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg",
-        // Repeat
-        "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Notion-logo.svg/2048px-Notion-logo.svg.png",
-        "https://upload.wikimedia.org/wikipedia/commons/3/33/Figma-logo.svg",
-        "https://assets-global.website-files.com/6257adef93867e56f84d3092/6259ce84838d7211516e3c0f_Linear_Logo_White.svg",
-        "https://assets.vercel.com/image/upload/v1662130559/nextjs/Icon_light_background.png",
-        "https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg",
-    ];
-
     const brandNames = ['Notion', 'Figma', 'Linear', 'Vercel', 'Microsoft', 'Notion', 'Figma', 'Linear', 'Vercel', 'Microsoft'];
 
     return (

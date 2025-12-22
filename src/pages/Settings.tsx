@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Settings as SettingsIcon, User, Bell, CreditCard, Palette, Shield, Upload, Camera, Check, Globe, Moon, Sun, Laptop, Zap, Sparkles, ChevronRight, Clock, Mail, MessageSquare, AlertCircle, Info } from 'lucide-react';
 import { DashboardLayout } from '../components/dashboard/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
@@ -22,7 +22,6 @@ export function Settings() {
     const [bio, setBio] = useState(user?.bio || '');
     const [isSaving, setIsSaving] = useState(false);
     const [theme, setTheme] = useState<ThemeMode>('system');
-    const [activeTab, setActiveTab] = useState('profile');
     const [showSavedIndicator, setShowSavedIndicator] = useState(false);
 
     const handleSaveProfile = async () => {

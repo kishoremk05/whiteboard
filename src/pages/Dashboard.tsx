@@ -20,7 +20,7 @@ export function Dashboard() {
 
     const tagId = searchParams.get('tag');
     const filteredBoards = tagId ? filterByTag(tagId) : boards.filter(b => !b.isDeleted);
-    const currentTag = tagId ? tags.find(t => t.id === tagId) : null;
+    const currentTag = tagId ? tags.find((t: any) => t.id === tagId) : null;
 
     const handleNewBoard = async () => {
         const board = await createBoard('Untitled Board');
