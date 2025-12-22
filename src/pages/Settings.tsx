@@ -144,10 +144,7 @@ export function Settings() {
       </div>
 
       {/* Settings Tabs */}
-      <Tabs
-        defaultValue="profile"
-        className="w-full"
-      >
+      <Tabs defaultValue="profile" className="w-full">
         <div className="sticky top-0 z-10 bg-gradient-to-b from-slate-50 via-slate-50 to-transparent pb-4 -mx-1 px-1">
           <TabsList className="bg-white border border-slate-200 shadow-sm p-1.5 rounded-xl">
             <TabsTrigger

@@ -8,10 +8,9 @@ export function useOnboarding() {
 
     // Check if user has completed onboarding
     useEffect(() => {
-        const hasOnboarded = localStorage.getItem(ONBOARDING_STORAGE_KEY);
-        if (!hasOnboarded) {
-            setShowOnboarding(true);
-        }
+        // Onboarding is disabled - always mark as completed
+        localStorage.setItem(ONBOARDING_STORAGE_KEY, 'true');
+        setShowOnboarding(false);
         setIsLoading(false);
     }, []);
 
