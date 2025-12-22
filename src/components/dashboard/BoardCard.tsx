@@ -75,7 +75,7 @@ export function BoardCard({ board, viewMode = 'grid' }: BoardCardProps) {
 
                 {/* Tags */}
                 <div className="hidden md:flex items-center gap-1">
-                    {board.tags.slice(0, 2).map((tag) => (
+                    {board.tags?.slice(0, 2).map((tag) => (
                         <Badge
                             key={tag.id}
                             variant="secondary"
@@ -203,7 +203,7 @@ export function BoardCard({ board, viewMode = 'grid' }: BoardCardProps) {
                 </div>
 
                 {/* Tags on Thumbnail */}
-                {board.tags.length > 0 && (
+                {board.tags && board.tags.length > 0 && (
                     <div className="absolute bottom-2 left-2 flex items-center gap-1">
                         {board.tags.slice(0, 2).map((tag) => (
                             <Badge

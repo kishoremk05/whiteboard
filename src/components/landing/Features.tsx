@@ -1,79 +1,64 @@
 import { useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { Sparkles, Zap, Users, Layers, Lock } from 'lucide-react';
 
 gsap.registerPlugin(ScrollTrigger);
 
 const features = [
     {
-        icon: (
-            <svg className="w-12 h-12" viewBox="0 0 48 48" fill="none">
-                <path d="M12 36V16L24 8L36 16V36L24 28L12 36Z" fill="#e0e7ff" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <animate attributeName="d" values="M12 36V16L24 8L36 16V36L24 28L12 36Z;M14 34V18L24 10L34 18V34L24 26L14 34Z;M12 36V16L24 8L36 16V36L24 28L12 36Z" dur="3s" repeatCount="indefinite" />
-                </path>
-                <circle cx="24" cy="20" r="4" fill="#6366f1">
-                    <animate attributeName="r" values="4;5;4" dur="2s" repeatCount="indefinite" />
-                </circle>
-            </svg>
-        ),
-        title: 'AI-Powered',
-        description: 'Smart suggestions and auto-complete help you work faster. Let AI enhance your creativity.',
+        icon: Sparkles,
+        title: 'AI-Powered Brainstorming',
+        description: 'Let AI help you organize ideas, suggest layouts, and generate mind maps automatically from your notes',
     },
     {
-        icon: (
-            <svg className="w-12 h-12" viewBox="0 0 48 48" fill="none">
-                <circle cx="18" cy="20" r="8" fill="#dcfce7" stroke="#22c55e" strokeWidth="2" />
-                <circle cx="30" cy="20" r="8" fill="#dbeafe" stroke="#3b82f6" strokeWidth="2" />
-                <circle cx="24" cy="32" r="8" fill="#fef3c7" stroke="#f59e0b" strokeWidth="2" />
-                <path d="M18 28L24 24L30 28" stroke="#64748b" strokeWidth="1.5" strokeLinecap="round">
-                    <animate attributeName="stroke-dashoffset" from="20" to="0" dur="1.5s" repeatCount="indefinite" />
-                </path>
-            </svg>
-        ),
+        icon: Zap,
+        title: 'Lightning Fast Performance',
+        description: 'Smoothly handle thousands of shapes, images, and annotations without lag',
+    },
+    {
+        icon: Users,
         title: 'Real-time Collaboration',
-        description: 'Work together with your team simultaneously. See live cursors and changes instantly.',
+        description: 'See your team\'s cursors, edits, and sticky notes update instantly. No refresh needed',
     },
     {
-        icon: (
-            <svg className="w-12 h-12" viewBox="0 0 48 48" fill="none">
-                <polygon points="24,8 40,40 8,40" fill="#fef3c7" stroke="#f59e0b" strokeWidth="2" strokeLinejoin="round">
-                    <animateTransform attributeName="transform" type="rotate" values="0 24 28;5 24 28;0 24 28;-5 24 28;0 24 28" dur="4s" repeatCount="indefinite" />
-                </polygon>
-                <circle cx="24" cy="28" r="4" fill="#f59e0b" />
-            </svg>
-        ),
-        title: 'Lightning Fast',
-        description: 'Optimized canvas engine handles thousands of objects without slowing down.',
+        icon: Lock,
+        title: 'Enterprise-Grade Security',
+        description: 'Your data is encrypted end-to-end with role-based access controls and SOC 2 compliance',
+    },
+    {
+        icon: Layers,
+        title: 'Infinite Canvas Workspace',
+        description: 'Never run out of space. Pan, zoom, and organize your ideas across an unlimited digital canvas',
     },
 ];
 
 export function Features() {
     const sectionRef = useRef<HTMLElement>(null);
-    const cardsRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const ctx = gsap.context(() => {
-            gsap.from('.feature-title', {
+            gsap.from('.features-title', {
                 scrollTrigger: {
-                    trigger: sectionRef.current,
-                    start: 'top 80%',
+                    trigger: '.features-title',
+                    start: 'top 85%',
                 },
-                y: 30,
+                y: 24,
                 opacity: 0,
                 duration: 0.6,
-                ease: 'power3.out',
+                immediateRender: false,
             });
 
             gsap.from('.feature-card', {
                 scrollTrigger: {
-                    trigger: cardsRef.current,
-                    start: 'top 85%',
+                    trigger: '.features-container',
+                    start: 'top 80%',
                 },
-                y: 50,
+                y: 30,
                 opacity: 0,
-                duration: 0.7,
-                stagger: 0.15,
-                ease: 'power3.out',
+                duration: 0.5,
+                stagger: 0.1,
+                immediateRender: false,
             });
         }, sectionRef);
 
@@ -81,35 +66,117 @@ export function Features() {
     }, []);
 
     return (
-        <section ref={sectionRef} id="features" className="py-24 bg-white">
-            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-                {/* Header */}
-                <div className="feature-title text-center mb-16">
-                    <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">
-                        Everything you need
-                    </h2>
-                    <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-                        Powerful features to help you create, collaborate, and ship faster.
+        <section ref={sectionRef} id="features" className="py-24 lg:py-32 bg-white relative overflow-hidden">
+            {/* Subtle noise/grain texture background */}
+            <div 
+                className="absolute inset-0 opacity-[0.4]"
+                style={{
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+                }}
+            />
+            {/* Hand-drawn decorative elements */}
+            <svg className="absolute top-12 left-8 w-20 h-20 opacity-60" viewBox="0 0 80 80" fill="none">
+                <path d="M10 40 Q 20 10, 40 20 Q 60 30, 70 10" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" fill="none" />
+                <circle cx="70" cy="12" r="4" fill="#3B82F6" />
+            </svg>
+            
+            <svg className="absolute top-20 right-12 w-16 h-16 opacity-50" viewBox="0 0 64 64" fill="none">
+                <path d="M32 8 L36 28 L56 32 L36 36 L32 56 L28 36 L8 32 L28 28 Z" stroke="#3B82F6" strokeWidth="2" fill="none" />
+            </svg>
+
+            <svg className="absolute bottom-20 left-16 w-24 h-24 opacity-40" viewBox="0 0 96 96" fill="none">
+                <circle cx="48" cy="48" r="40" stroke="#3B82F6" strokeWidth="2" strokeDasharray="6 6" fill="none" />
+                <circle cx="48" cy="48" r="25" stroke="#3B82F6" strokeWidth="1.5" strokeDasharray="4 4" fill="none" />
+            </svg>
+
+            <svg className="absolute bottom-32 right-20 w-12 h-12 opacity-50" viewBox="0 0 48 48" fill="none">
+                <path d="M24 4 C 36 16, 44 24, 24 44 C 4 24, 12 16, 24 4" stroke="#E85A4F" strokeWidth="2" fill="none" />
+            </svg>
+
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+                {/* Section Header - Handwritten style */}
+                <div className="features-title text-center mb-16 lg:mb-20">
+                    <div className="inline-block relative">
+                        <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black text-gray-900" style={{ fontFamily: 'Georgia, serif' }}>
+                            Main Features
+                        </h2>
+                        {/* Hand-drawn underline */}
+                        <svg className="absolute -bottom-3 left-0 w-full h-6" viewBox="0 0 300 24" fill="none" preserveAspectRatio="none">
+                            <path d="M5 12 Q 75 4, 150 14 Q 225 24, 295 10" stroke="#3B82F6" strokeWidth="3" strokeLinecap="round" fill="none" />
+                        </svg>
+                    </div>
+                    <p className="text-lg text-gray-500 mt-8 max-w-xl mx-auto">
+                        Everything you need to bring your ideas to life
                     </p>
                 </div>
 
-                {/* Features */}
-                <div ref={cardsRef} className="grid md:grid-cols-3 gap-12">
-                    {features.map((feature) => (
-                        <div key={feature.title} className="feature-card text-center">
-                            <div className="inline-flex items-center justify-center mb-6">
-                                {feature.icon}
+                {/* Features - Organic layout with hand-drawn boxes */}
+                <div className="features-container relative">
+                    {/* Row 1 */}
+                    <div className="flex flex-wrap justify-center gap-6 lg:gap-8 mb-8">
+                        {features.slice(0, 3).map((feature, idx) => (
+                            <div
+                                key={feature.title}
+                                className="feature-card relative bg-white rounded-lg p-6 w-72 shadow-soft"
+                                style={{ transform: `rotate(${idx % 2 === 0 ? '-1deg' : '1deg'})` }}
+                            >
+                                {/* Hand-drawn border */}
+                                <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 288 140" preserveAspectRatio="none">
+                                    <rect x="4" y="4" width="280" height="132" rx="8" stroke="#3B82F6" strokeWidth="2" fill="none" strokeDasharray="0" />
+                                </svg>
+                                
+                                <div className="relative z-10">
+                                    <div className="w-12 h-12 rounded-xl bg-yellow-100 flex items-center justify-center mb-4">
+                                        <feature.icon className="w-6 h-6 text-yellow-700" />
+                                    </div>
+                                    <h3 className="text-lg font-bold text-gray-900 mb-2">{feature.title}</h3>
+                                    <p className="text-gray-500 text-sm">{feature.description}</p>
+                                </div>
                             </div>
-                            <h3 className="text-xl font-semibold text-slate-900 mb-3">
-                                {feature.title}
-                            </h3>
-                            <p className="text-slate-600 leading-relaxed">
-                                {feature.description}
-                            </p>
-                        </div>
-                    ))}
+                        ))}
+                    </div>
+
+                    {/* Row 2 */}
+                    <div className="flex flex-wrap justify-center gap-6 lg:gap-8">
+                        {features.slice(3, 5).map((feature, idx) => (
+                            <div
+                                key={feature.title}
+                                className="feature-card relative bg-white rounded-lg p-6 w-72 shadow-soft"
+                                style={{ transform: `rotate(${idx % 2 === 0 ? '1deg' : '-1deg'})` }}
+                            >
+                                {/* Hand-drawn border */}
+                                <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 288 140" preserveAspectRatio="none">
+                                    <rect x="4" y="4" width="280" height="132" rx="8" stroke="#3B82F6" strokeWidth="2" fill="none" />
+                                </svg>
+                                
+                                <div className="relative z-10">
+                                    <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center mb-4">
+                                        <feature.icon className="w-6 h-6 text-gray-700" />
+                                    </div>
+                                    <h3 className="text-lg font-bold text-gray-900 mb-2">{feature.title}</h3>
+                                    <p className="text-gray-500 text-sm">{feature.description}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Decorative connecting swoosh */}
+                    <svg className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full pointer-events-none opacity-20" viewBox="0 0 800 400" fill="none">
+                        <path d="M100 200 Q 250 100, 400 200 Q 550 300, 700 200" stroke="#3B82F6" strokeWidth="3" strokeDasharray="10 10" fill="none" />
+                    </svg>
+                </div>
+
+                {/* Bottom doodle */}
+                <div className="flex justify-center mt-16">
+                    <svg className="w-32 h-8 opacity-40" viewBox="0 0 128 32" fill="none">
+                        <path d="M4 16 Q 32 4, 64 16 Q 96 28, 124 16" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" fill="none" />
+                        <circle cx="64" cy="16" r="4" fill="#E85A4F" />
+                    </svg>
                 </div>
             </div>
+
+            {/* Dotted section divider */}
+            <div className="absolute bottom-0 left-0 right-0 border-b-2 border-dashed border-gray-200" />
         </section>
     );
 }

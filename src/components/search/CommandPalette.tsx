@@ -29,7 +29,7 @@ interface CommandPaletteProps {
 
 export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
     const navigate = useNavigate();
-    const { boards, tags, createBoard, searchBoards } = useBoards();
+    const { boards, createBoard, searchBoards } = useBoards();
     const [search, setSearch] = useState('');
 
     // Filter boards based on search
@@ -49,13 +49,13 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
     }, [open, onOpenChange]);
 
     const handleSelect = useCallback(
-        (action: string) => {
+        async (action: string) => {
             onOpenChange(false);
             setSearch('');
 
             switch (action) {
                 case 'new-board':
-                    const board = createBoard('Untitled Board');
+                    const board = await createBoard('Untitled Board');
                     navigate(`/board/${board.id}`);
                     break;
                 case 'all-boards':
@@ -77,9 +77,6 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                     if (action.startsWith('board:')) {
                         const boardId = action.replace('board:', '');
                         navigate(`/board/${boardId}`);
-                    } else if (action.startsWith('tag:')) {
-                        const tagId = action.replace('tag:', '');
-                        navigate(`/dashboard?tag=${tagId}`);
                     }
             }
         },
@@ -135,19 +132,6 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <p className="font-medium text-slate-900 truncate">{board.title}</p>
-                                        {board.tags.length > 0 && (
-                                            <div className="flex items-center gap-1 mt-0.5">
-                                                {board.tags.slice(0, 2).map((tag) => (
-                                                    <span
-                                                        key={tag.id}
-                                                        className="inline-flex items-center text-xs px-1.5 py-0.5 rounded"
-                                                        style={{ backgroundColor: `${tag.color}20`, color: tag.color }}
-                                                    >
-                                                        {tag.name}
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        )}
                                     </div>
                                     <ExternalLink className="w-4 h-4 text-slate-400" />
                                 </CommandItem>
@@ -196,27 +180,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                         </CommandItem>
                     </CommandGroup>
 
-                    {/* Tags */}
-                    {tags.length > 0 && (
-                        <>
-                            <CommandSeparator className="my-2" />
-                            <CommandGroup heading="Tags">
-                                {tags.slice(0, 5).map((tag) => (
-                                    <CommandItem
-                                        key={tag.id}
-                                        onSelect={() => handleSelect(`tag:${tag.id}`)}
-                                        className="flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer aria-selected:bg-slate-100"
-                                    >
-                                        <div
-                                            className="w-3 h-3 rounded-full"
-                                            style={{ backgroundColor: tag.color }}
-                                        />
-                                        <span>{tag.name}</span>
-                                    </CommandItem>
-                                ))}
-                            </CommandGroup>
-                        </>
-                    )}
+
                 </CommandList>
 
                 {/* Footer */}

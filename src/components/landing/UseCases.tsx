@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { GraduationCap, Briefcase, Palette, Users, Check } from 'lucide-react';
+import { GraduationCap, Briefcase, Palette, Users } from 'lucide-react';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -9,282 +9,158 @@ const useCases = [
     {
         id: 'education',
         icon: GraduationCap,
-        title: 'Education',
-        description: 'Make learning visual and interactive with diagrams, equations, and annotations.',
-        benefits: ['Interactive lessons', 'Student collaboration', 'Visual explanations'],
+        title: 'Education & Learning',
+        description: 'Create interactive lessons with diagrams, mind maps, and collaborative exercises. Students can brainstorm together, annotate materials, and visualize complex concepts in real-time.',
     },
     {
         id: 'business',
         icon: Briefcase,
-        title: 'Business',
-        description: 'Plan strategies, map processes, and run workshops with distributed teams.',
-        benefits: ['Sprint planning', 'Process mapping', 'Remote workshops'],
+        title: 'Business Strategy',
+        description: 'Plan roadmaps, run sprint retrospectives, and facilitate workshops. Map out business processes, create SWOT analyses, and align your team on strategic initiatives with visual clarity.',
     },
     {
         id: 'design',
         icon: Palette,
-        title: 'Design',
-        description: 'Brainstorm ideas, sketch wireframes, and create mood boards effortlessly.',
-        benefits: ['Wireframing', 'Mood boards', 'Design critiques'],
+        title: 'Design & Creativity',
+        description: 'Sketch wireframes, build user journey maps, and create mood boards. Perfect for UX designers, product teams, and creative professionals who think visually and iterate quickly.',
     },
     {
         id: 'teams',
         icon: Users,
-        title: 'Teams',
-        description: 'Keep your distributed team aligned with real-time collaborative whiteboards.',
-        benefits: ['Daily standups', 'Retrospectives', 'Brainstorming'],
+        title: 'Remote Teams',
+        description: 'Bridge the distance with a shared visual workspace. Run daily standups, brainstorm new features, and keep distributed teams aligned with async-friendly collaboration tools.',
     },
 ];
-
-// Animated illustrations for each use case
-function EducationIllustration() {
-    const pathRef = useRef<SVGPathElement>(null);
-
-    useEffect(() => {
-        if (pathRef.current) {
-            const length = pathRef.current.getTotalLength();
-            gsap.set(pathRef.current, { strokeDasharray: length, strokeDashoffset: length });
-            gsap.to(pathRef.current, { strokeDashoffset: 0, duration: 2, ease: 'power2.inOut', repeat: -1, repeatDelay: 1 });
-        }
-    }, []);
-
-    return (
-        <svg viewBox="0 0 200 160" className="w-full h-full">
-            {/* Chalkboard */}
-            <rect x="20" y="20" width="160" height="100" rx="4" fill="#1e293b" />
-            <rect x="30" y="30" width="140" height="80" rx="2" fill="#334155" />
-
-            {/* Math equation being drawn */}
-            <path
-                ref={pathRef}
-                d="M50 70 L70 50 L90 70 M110 55 L110 75 M130 60 Q140 50 150 60 Q160 70 150 80"
-                stroke="#fbbf24"
-                strokeWidth="3"
-                strokeLinecap="round"
-                fill="none"
-            />
-
-            {/* Floating elements */}
-            <circle cx="170" cy="35" r="8" fill="#6366f1" opacity="0.8">
-                <animate attributeName="cy" values="35;30;35" dur="2s" repeatCount="indefinite" />
-            </circle>
-            <rect x="25" y="130" width="30" height="20" rx="2" fill="#22c55e" opacity="0.8">
-                <animate attributeName="y" values="130;125;130" dur="2.5s" repeatCount="indefinite" />
-            </rect>
-        </svg>
-    );
-}
-
-function BusinessIllustration() {
-    return (
-        <svg viewBox="0 0 200 160" className="w-full h-full">
-            {/* Kanban board */}
-            <rect x="20" y="20" width="50" height="120" rx="4" fill="#e0e7ff" />
-            <rect x="75" y="20" width="50" height="120" rx="4" fill="#dbeafe" />
-            <rect x="130" y="20" width="50" height="120" rx="4" fill="#dcfce7" />
-
-            {/* Cards */}
-            <rect x="28" y="35" width="34" height="25" rx="2" fill="white" stroke="#6366f1" strokeWidth="1">
-                <animate attributeName="y" values="35;40;35" dur="3s" repeatCount="indefinite" />
-            </rect>
-            <rect x="28" y="68" width="34" height="20" rx="2" fill="white" stroke="#6366f1" strokeWidth="1" />
-
-            <rect x="83" y="35" width="34" height="30" rx="2" fill="white" stroke="#3b82f6" strokeWidth="1">
-                <animate attributeName="y" values="35;32;35" dur="2.5s" repeatCount="indefinite" />
-            </rect>
-
-            <rect x="138" y="35" width="34" height="22" rx="2" fill="white" stroke="#22c55e" strokeWidth="1">
-                <animate attributeName="y" values="35;38;35" dur="2.8s" repeatCount="indefinite" />
-            </rect>
-
-            {/* Arrow moving */}
-            <path d="M95 100 L105 100" stroke="#64748b" strokeWidth="2" strokeLinecap="round">
-                <animate attributeName="d" values="M95 100 L105 100;M100 100 L110 100;M95 100 L105 100" dur="1.5s" repeatCount="indefinite" />
-            </path>
-        </svg>
-    );
-}
-
-function DesignIllustration() {
-    const lineRef = useRef<SVGPathElement>(null);
-
-    useEffect(() => {
-        if (lineRef.current) {
-            const length = lineRef.current.getTotalLength();
-            gsap.set(lineRef.current, { strokeDasharray: length, strokeDashoffset: length });
-            gsap.to(lineRef.current, { strokeDashoffset: 0, duration: 1.5, ease: 'power2.out', repeat: -1, repeatDelay: 2 });
-        }
-    }, []);
-
-    return (
-        <svg viewBox="0 0 200 160" className="w-full h-full">
-            {/* Artboard */}
-            <rect x="30" y="20" width="140" height="100" rx="4" fill="white" stroke="#e2e8f0" strokeWidth="2" />
-
-            {/* Drawing being created */}
-            <path
-                ref={lineRef}
-                d="M50 80 Q80 40 110 70 Q140 100 170 60"
-                stroke="#ec4899"
-                strokeWidth="3"
-                strokeLinecap="round"
-                fill="none"
-            />
-
-            {/* Color palette */}
-            <circle cx="50" cy="135" r="10" fill="#6366f1">
-                <animate attributeName="r" values="10;12;10" dur="2s" repeatCount="indefinite" />
-            </circle>
-            <circle cx="80" cy="135" r="10" fill="#ec4899" />
-            <circle cx="110" cy="135" r="10" fill="#f59e0b" />
-            <circle cx="140" cy="135" r="10" fill="#22c55e" />
-
-            {/* Floating shape */}
-            <rect x="150" y="25" width="15" height="15" rx="2" fill="#fef3c7" stroke="#f59e0b" strokeWidth="1">
-                <animateTransform attributeName="transform" type="rotate" values="0 157.5 32.5;10 157.5 32.5;0 157.5 32.5" dur="3s" repeatCount="indefinite" />
-            </rect>
-        </svg>
-    );
-}
-
-function TeamsIllustration() {
-    return (
-        <svg viewBox="0 0 200 160" className="w-full h-full">
-            {/* Central whiteboard */}
-            <rect x="50" y="40" width="100" height="70" rx="4" fill="white" stroke="#e2e8f0" strokeWidth="2" />
-
-            {/* Team members around */}
-            <circle cx="35" cy="50" r="15" fill="#dbeafe" stroke="#3b82f6" strokeWidth="2">
-                <animate attributeName="cx" values="35;38;35" dur="2s" repeatCount="indefinite" />
-            </circle>
-            <circle cx="165" cy="50" r="15" fill="#dcfce7" stroke="#22c55e" strokeWidth="2">
-                <animate attributeName="cx" values="165;162;165" dur="2.2s" repeatCount="indefinite" />
-            </circle>
-            <circle cx="35" cy="110" r="15" fill="#fef3c7" stroke="#f59e0b" strokeWidth="2">
-                <animate attributeName="cx" values="35;38;35" dur="2.4s" repeatCount="indefinite" />
-            </circle>
-            <circle cx="165" cy="110" r="15" fill="#e0e7ff" stroke="#6366f1" strokeWidth="2">
-                <animate attributeName="cx" values="165;162;165" dur="2.6s" repeatCount="indefinite" />
-            </circle>
-
-            {/* Connection lines */}
-            <line x1="50" y1="50" x2="50" y2="50" stroke="#3b82f6" strokeWidth="1.5" strokeDasharray="4">
-                <animate attributeName="x1" values="50;45;50" dur="2s" repeatCount="indefinite" />
-            </line>
-
-            {/* Cursor on board */}
-            <path d="M90 65 L90 80 L95 76 L98 83 L102 81 L99 74 L104 74 L90 65Z" fill="#6366f1">
-                <animate attributeName="transform" values="translate(0,0);translate(10,5);translate(0,0)" dur="2s" repeatCount="indefinite" />
-            </path>
-        </svg>
-    );
-}
-
-const illustrations: Record<string, React.FC> = {
-    education: EducationIllustration,
-    business: BusinessIllustration,
-    design: DesignIllustration,
-    teams: TeamsIllustration,
-};
 
 export function UseCases() {
     const sectionRef = useRef<HTMLElement>(null);
     const [activeTab, setActiveTab] = useState('education');
-    const contentRef = useRef<HTMLDivElement>(null);
-
     const activeCase = useCases.find((uc) => uc.id === activeTab) || useCases[0];
-    const IllustrationComponent = illustrations[activeTab];
 
     useEffect(() => {
         const ctx = gsap.context(() => {
-            gsap.from('.usecase-header', {
+            gsap.from('.usecase-title', {
                 scrollTrigger: {
-                    trigger: sectionRef.current,
-                    start: 'top 80%',
+                    trigger: '.usecase-title',
+                    start: 'top 85%',
                 },
+                y: 24,
                 opacity: 0,
-                y: 30,
                 duration: 0.6,
-                ease: 'power3.out',
             });
         }, sectionRef);
 
         return () => ctx.revert();
     }, []);
 
-    // Animate content when tab changes
-    useEffect(() => {
-        if (contentRef.current) {
-            gsap.fromTo(contentRef.current,
-                { opacity: 0, y: 20 },
-                { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out' }
-            );
-        }
-    }, [activeTab]);
-
     return (
-        <section ref={sectionRef} id="use-cases" className="py-24 bg-slate-50">
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-                {/* Header */}
-                <div className="usecase-header text-center mb-12">
-                    <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">
-                        Built for every workflow
-                    </h2>
-                    <p className="text-lg text-slate-600">
-                        From classrooms to boardrooms, CanvasAI adapts to how you work.
+        <section ref={sectionRef} id="use-cases" className="py-24 lg:py-32 bg-white relative overflow-hidden">
+            {/* Subtle noise/grain texture background */}
+            <div 
+                className="absolute inset-0 opacity-[0.4]"
+                style={{
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+                }}
+            />
+            {/* Hand-drawn decorative doodles */}
+            <svg className="absolute top-12 left-8 w-20 h-20 opacity-50" viewBox="0 0 80 80" fill="none">
+                <circle cx="40" cy="40" r="32" stroke="#3B82F6" strokeWidth="2" strokeDasharray="8 4" fill="none" />
+                <circle cx="40" cy="40" r="16" stroke="#3B82F6" strokeWidth="1.5" fill="none" />
+                <circle cx="40" cy="40" r="4" fill="#3B82F6" />
+            </svg>
+
+            <svg className="absolute top-24 right-12 w-16 h-16 opacity-40" viewBox="0 0 64 64" fill="none">
+                <path d="M32 4 L38 26 L60 32 L38 38 L32 60 L26 38 L4 32 L26 26 Z" stroke="#FBBF24" strokeWidth="2" fill="none" />
+            </svg>
+
+            <svg className="absolute bottom-20 left-20 w-24 h-16 opacity-40" viewBox="0 0 96 64" fill="none">
+                <path d="M8 32 Q 24 8, 48 32 Q 72 56, 88 32" stroke="#E85A4F" strokeWidth="2" strokeLinecap="round" fill="none" />
+            </svg>
+
+            {/* Camera doodle */}
+            <svg className="absolute bottom-32 right-8 w-16 h-14 opacity-40" viewBox="0 0 64 56" fill="none">
+                <rect x="4" y="12" width="56" height="40" rx="4" stroke="#3B82F6" strokeWidth="2" fill="none" />
+                <circle cx="32" cy="32" r="12" stroke="#3B82F6" strokeWidth="2" fill="none" />
+                <circle cx="32" cy="32" r="6" stroke="#3B82F6" strokeWidth="1.5" fill="none" />
+                <rect x="20" y="4" width="24" height="10" rx="2" stroke="#3B82F6" strokeWidth="2" fill="none" />
+            </svg>
+
+            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+                {/* Section Header */}
+                <div className="usecase-title text-center mb-12 lg:mb-16">
+                    <div className="inline-block relative">
+                        <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black text-gray-900" style={{ fontFamily: 'Georgia, serif' }}>
+                            Use Cases
+                        </h2>
+                        <svg className="absolute -bottom-3 left-0 w-full h-6" viewBox="0 0 250 24" fill="none" preserveAspectRatio="none">
+                            <path d="M5 14 Q 62 6, 125 12 Q 188 18, 245 8" stroke="#3B82F6" strokeWidth="3" strokeLinecap="round" fill="none" />
+                        </svg>
+                    </div>
+                    <p className="text-lg text-gray-500 mt-8 max-w-xl mx-auto">
+                        From classrooms to boardrooms
                     </p>
                 </div>
 
-                {/* Tabs */}
-                <div className="flex flex-wrap justify-center gap-2 mb-12">
+                {/* Tab buttons - Hand-drawn style */}
+                <div className="flex flex-wrap justify-center gap-4 mb-12">
                     {useCases.map((uc) => (
                         <button
                             key={uc.id}
                             onClick={() => setActiveTab(uc.id)}
-                            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all ${activeTab === uc.id
-                                    ? 'bg-slate-900 text-white shadow-lg'
-                                    : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-                                }`}
+                            className={`relative px-6 py-3 rounded-lg font-medium transition-all ${
+                                activeTab === uc.id
+                                    ? 'bg-white text-gray-900 shadow-soft'
+                                    : 'text-gray-500 hover:text-gray-900'
+                            }`}
                         >
-                            <uc.icon className="w-4 h-4" />
-                            {uc.title}
+                            {activeTab === uc.id && (
+                                <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 120 48" preserveAspectRatio="none">
+                                    <rect x="2" y="2" width="116" height="44" rx="8" stroke="#3B82F6" strokeWidth="2" fill="none" />
+                                </svg>
+                            )}
+                            <span className="relative z-10 flex items-center gap-2">
+                                <uc.icon className="w-4 h-4" />
+                                {uc.title}
+                            </span>
                         </button>
                     ))}
                 </div>
 
-                {/* Content */}
-                <div ref={contentRef} className="grid md:grid-cols-2 gap-12 items-center">
-                    {/* Text */}
-                    <div>
-                        <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary-100 text-primary-600 mb-6">
-                            <activeCase.icon className="w-6 h-6" />
-                        </div>
-                        <h3 className="text-2xl font-bold text-slate-900 mb-4">
-                            Perfect for {activeCase.title.toLowerCase()}
-                        </h3>
-                        <p className="text-slate-600 mb-6 leading-relaxed">
-                            {activeCase.description}
-                        </p>
-                        <ul className="space-y-3">
-                            {activeCase.benefits.map((benefit) => (
-                                <li key={benefit} className="flex items-center gap-3 text-slate-700">
-                                    <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                                        <Check className="w-3 h-3 text-green-600" />
-                                    </div>
-                                    {benefit}
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
+                {/* Active case content */}
+                <div className="relative bg-white rounded-xl p-8 lg:p-12 shadow-soft max-w-2xl mx-auto">
+                    {/* Hand-drawn border */}
+                    <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 640 300" preserveAspectRatio="none">
+                        <rect x="4" y="4" width="632" height="292" rx="12" stroke="#3B82F6" strokeWidth="2.5" fill="none" />
+                    </svg>
 
-                    {/* Animated Illustration */}
-                    <div className="bg-gradient-to-br from-primary-500 to-primary-700 rounded-2xl p-8 shadow-xl">
-                        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 aspect-[5/4]">
-                            <IllustrationComponent />
+                    <div className="relative z-10 text-center">
+                        <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-yellow-100 flex items-center justify-center">
+                            <activeCase.icon className="w-10 h-10 text-yellow-700" />
+                        </div>
+                        <h3 className="text-2xl font-bold text-gray-900 mb-4">{activeCase.title}</h3>
+                        <p className="text-gray-500 text-lg max-w-md mx-auto">{activeCase.description}</p>
+                        
+                        {/* Decorative stars */}
+                        <div className="flex justify-center gap-2 mt-6">
+                            {[1, 2, 3].map((i) => (
+                                <svg key={i} className="w-6 h-6 text-yellow-400" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 2 L14 8 L20 9 L15 14 L17 20 L12 17 L7 20 L9 14 L4 9 L10 8 Z" />
+                                </svg>
+                            ))}
                         </div>
                     </div>
                 </div>
+
+                {/* Bottom doodle */}
+                <div className="flex justify-center mt-16">
+                    <svg className="w-40 h-8 opacity-30" viewBox="0 0 160 32" fill="none">
+                        <path d="M8 16 C 40 4, 80 28, 120 16 C 136 12, 148 16, 152 16" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" fill="none" />
+                    </svg>
+                </div>
             </div>
+
+            {/* Dotted section divider */}
+            <div className="absolute bottom-0 left-0 right-0 border-b-2 border-dashed border-gray-200" />
         </section>
     );
 }

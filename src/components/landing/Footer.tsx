@@ -1,105 +1,65 @@
 import { Link } from 'react-router-dom';
-import { Sparkles, Twitter, Github, Linkedin } from 'lucide-react';
-
-const links = {
-    product: [
-        { label: 'Features', href: '#features' },
-        { label: 'Use Cases', href: '#use-cases' },
-        { label: 'Templates', href: '/templates' },
-    ],
-    company: [
-        { label: 'About', href: '/about' },
-        { label: 'Blog', href: '/blog' },
-        { label: 'Contact', href: '/contact' },
-    ],
-    legal: [
-        { label: 'Privacy', href: '/privacy' },
-        { label: 'Terms', href: '/terms' },
-    ],
-};
+import { Twitter, Github, Linkedin, Mail } from 'lucide-react';
 
 export function Footer() {
     return (
-        <footer className="bg-white border-t border-slate-200 py-16">
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
-                    {/* Brand */}
-                    <div className="col-span-2 md:col-span-1">
-                        <Link to="/" className="flex items-center gap-2 mb-4">
-                            <div className="w-8 h-8 rounded-lg bg-primary-600 flex items-center justify-center">
-                                <Sparkles className="w-4 h-4 text-white" />
+        <footer className="bg-gray-900 text-white border-t border-gray-800">
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    {/* Brand & Copyright */}
+                    <div className="flex items-center gap-4">
+                        <Link to="/" className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center">
+                                <span className="text-gray-900 font-bold text-xs">CB</span>
                             </div>
-                            <span className="text-lg font-bold text-slate-900">
-                                Canvas<span className="text-primary-600">AI</span>
+                            <span className="text-sm font-semibold">
+                                Canvas<span className="text-gray-400">Board</span>
                             </span>
                         </Link>
-                        <p className="text-sm text-slate-500 mb-4">
-                            The collaborative whiteboard for modern teams.
-                        </p>
-                        <div className="flex gap-3">
-                            <a href="#" className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition-colors">
-                                <Twitter className="w-4 h-4" />
+                        <span className="text-xs text-gray-500 hidden sm:inline">
+                            © {new Date().getFullYear()}
+                        </span>
+                    </div>
+
+                    {/* Links & Social */}
+                    <div className="flex items-center gap-6">
+                        {/* Legal Links */}
+                        <div className="flex items-center gap-4 text-xs">
+                            <Link to="/privacy" className="text-gray-500 hover:text-white transition-colors">
+                                Privacy
+                            </Link>
+                            <Link to="/terms" className="text-gray-500 hover:text-white transition-colors">
+                                Terms
+                            </Link>
+                        </div>
+
+                        {/* Social Icons */}
+                        <div className="flex gap-2">
+                            <a
+                                href="#"
+                                className="w-8 h-8 rounded-lg bg-gray-800 hover:bg-gray-700 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+                            >
+                                <Twitter className="w-3.5 h-3.5" />
                             </a>
-                            <a href="#" className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition-colors">
-                                <Github className="w-4 h-4" />
+                            <a
+                                href="#"
+                                className="w-8 h-8 rounded-lg bg-gray-800 hover:bg-gray-700 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+                            >
+                                <Github className="w-3.5 h-3.5" />
                             </a>
-                            <a href="#" className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition-colors">
-                                <Linkedin className="w-4 h-4" />
+                            <a
+                                href="#"
+                                className="w-8 h-8 rounded-lg bg-gray-800 hover:bg-gray-700 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+                            >
+                                <Linkedin className="w-3.5 h-3.5" />
+                            </a>
+                            <a
+                                href="#"
+                                className="w-8 h-8 rounded-lg bg-gray-800 hover:bg-gray-700 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+                            >
+                                <Mail className="w-3.5 h-3.5" />
                             </a>
                         </div>
-                    </div>
-
-                    {/* Product */}
-                    <div>
-                        <h4 className="font-semibold text-slate-900 mb-4">Product</h4>
-                        <ul className="space-y-2">
-                            {links.product.map((link) => (
-                                <li key={link.label}>
-                                    <Link to={link.href} className="text-sm text-slate-600 hover:text-slate-900 transition-colors">
-                                        {link.label}
-                                    </Link>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-
-                    {/* Company */}
-                    <div>
-                        <h4 className="font-semibold text-slate-900 mb-4">Company</h4>
-                        <ul className="space-y-2">
-                            {links.company.map((link) => (
-                                <li key={link.label}>
-                                    <Link to={link.href} className="text-sm text-slate-600 hover:text-slate-900 transition-colors">
-                                        {link.label}
-                                    </Link>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-
-                    {/* Legal */}
-                    <div>
-                        <h4 className="font-semibold text-slate-900 mb-4">Legal</h4>
-                        <ul className="space-y-2">
-                            {links.legal.map((link) => (
-                                <li key={link.label}>
-                                    <Link to={link.href} className="text-sm text-slate-600 hover:text-slate-900 transition-colors">
-                                        {link.label}
-                                    </Link>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                </div>
-
-                {/* Bottom */}
-                <div className="pt-8 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <p className="text-sm text-slate-500">
-                        © {new Date().getFullYear()} CanvasAI. All rights reserved.
-                    </p>
-                    <div className="flex items-center gap-2 text-sm text-slate-500">
-                        <span className="w-2 h-2 rounded-full bg-green-500" />
-                        All systems operational
                     </div>
                 </div>
             </div>

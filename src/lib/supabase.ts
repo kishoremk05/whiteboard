@@ -1,11 +1,20 @@
 import { createClient } from '@supabase/supabase-js';
 
 // Supabase configuration
-// IMPORTANT: Replace these with your client's Supabase project credentials
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'YOUR_SUPABASE_URL';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'YOUR_SUPABASE_ANON_KEY';
+// For production, use environment variables: VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://hgsydflkpdgjnakdwhnb.supabase.co';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhnc3lkZmxrcGRnam5ha2R3aG5iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyNTk2NDgsImV4cCI6MjA4MDgzNTY0OH0.K05B2xm8A9V7fE-_LEMvipFUlSYZkNdckkT1UHD-Els';
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+console.log('Initializing Supabase with URL:', supabaseUrl);
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        storageKey: 'canvasai-auth',
+    },
+});
 
 // Auth helpers
 export const signUp = async (email: string, password: string, name: string) => {

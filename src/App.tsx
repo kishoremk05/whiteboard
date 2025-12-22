@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { BoardProvider } from './contexts/BoardContext';
 import { TooltipProvider } from './components/ui/tooltip';
+import { CommandPalette } from './components/search/CommandPalette';
 
 // Pages
 import { Landing } from './pages/Landing';
@@ -55,6 +57,22 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   }
 
   return <>{children}</>;
+}
+
+// Global command palette wrapper
+function GlobalCommandPalette() {
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const { isAuthenticated } = useAuth();
+
+  // Only show command palette for authenticated users
+  if (!isAuthenticated) return null;
+
+  return (
+    <CommandPalette
+      open={commandPaletteOpen}
+      onOpenChange={setCommandPaletteOpen}
+    />
+  );
 }
 
 function AppRoutes() {
@@ -150,6 +168,7 @@ function App() {
         <BoardProvider>
           <TooltipProvider>
             <AppRoutes />
+            <GlobalCommandPalette />
             <Toaster
               position="bottom-right"
               toastOptions={{
@@ -169,3 +188,4 @@ function App() {
 }
 
 export default App;
+

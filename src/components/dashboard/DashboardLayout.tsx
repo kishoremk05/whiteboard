@@ -13,7 +13,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
 
     return (
-        <div className="min-h-screen bg-slate-50">
+        <div className="min-h-screen bg-white">
             {/* Sidebar */}
             <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 

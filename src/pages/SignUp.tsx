@@ -141,7 +141,7 @@ export function SignUp() {
                 <Button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full h-12 bg-primary-600 hover:bg-primary-700 text-white"
+                    className="w-full h-12 bg-gray-900 hover:bg-gray-800 text-white"
                 >
                     {isLoading ? (
                         <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -165,7 +165,7 @@ export function SignUp() {
 
                 <p className="text-center text-slate-600 text-sm pt-4">
                     Already have an account?{' '}
-                    <Link to="/login" className="text-primary-600 hover:text-primary-700 font-medium">
+                    <Link to="/login" className="text-gray-900 hover:text-gray-700 font-medium">
                         Sign in
                     </Link>
                 </p>

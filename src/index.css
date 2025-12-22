@@ -2,126 +2,221 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Base Styles */
+/* Warm Collaborative Theme - Base Styles */
 @layer base {
-  html {
-    scroll-behavior: smooth;
-  }
+    html {
+        scroll-behavior: smooth;
+    }
 
-  body {
-    @apply font-sans antialiased bg-slate-50 text-slate-900;
-  }
+    body {
+        @apply font-sans antialiased bg-cream-200 text-brown-800;
+    }
 
-  ::selection {
-    @apply bg-primary-200 text-primary-900;
-  }
+    ::selection {
+        @apply bg-primary-100 text-primary-900;
+    }
 
-  :focus-visible {
-    @apply outline-2 outline-primary-500 outline-offset-2;
-  }
+    :focus-visible {
+        @apply outline-2 outline-primary-500 outline-offset-2;
+    }
 
-  ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
+    /* Clean scrollbar */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
 
-  ::-webkit-scrollbar-track {
-    @apply bg-slate-100;
-  }
+    ::-webkit-scrollbar-track {
+        @apply bg-cream-100;
+    }
 
-  ::-webkit-scrollbar-thumb {
-    @apply bg-slate-300 rounded;
-  }
+    ::-webkit-scrollbar-thumb {
+        @apply bg-cream-400 rounded-full;
+    }
 
-  ::-webkit-scrollbar-thumb:hover {
-    @apply bg-slate-400;
-  }
+    ::-webkit-scrollbar-thumb:hover {
+        @apply bg-cream-500;
+    }
 }
 
-/* Custom Components */
+/* Warm Collaborative Theme - Components */
 @layer components {
-  .glass {
-    @apply bg-white/80 backdrop-blur-xl;
-  }
 
-  .glass-dark {
-    @apply bg-slate-900/80 backdrop-blur-xl;
-  }
+    /* Warm backgrounds */
+    .bg-subtle {
+        @apply bg-cream-100;
+    }
 
-  .gradient-primary {
-    @apply bg-gradient-to-br from-primary-500 to-primary-700;
-  }
+    .bg-warm {
+        @apply bg-cream-200;
+    }
 
-  .gradient-accent {
-    @apply bg-gradient-to-br from-accent-400 to-accent-600;
-  }
+    /* Text styling */
+    .text-primary-strong {
+        @apply text-primary-600;
+    }
 
-  .gradient-mesh {
-    background:
-      radial-gradient(at 40% 20%, theme('colors.primary.100') 0px, transparent 50%),
-      radial-gradient(at 80% 0%, theme('colors.accent.100') 0px, transparent 50%),
-      radial-gradient(at 0% 50%, theme('colors.primary.50') 0px, transparent 50%),
-      radial-gradient(at 80% 50%, theme('colors.accent.50') 0px, transparent 50%),
-      radial-gradient(at 0% 100%, theme('colors.primary.100') 0px, transparent 50%);
-  }
+    /* Clean card styling */
+    .card {
+        @apply bg-white rounded-2xl border border-cream-300 shadow-card;
+    }
 
-  .text-gradient {
-    @apply bg-gradient-to-r from-primary-600 to-accent-500 bg-clip-text text-transparent;
-  }
+    .card-hover {
+        @apply transition-all duration-200 hover:shadow-medium hover:-translate-y-0.5;
+    }
 
-  .skeleton {
-    @apply bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%] animate-pulse;
-  }
+    /* Button base */
+    .btn {
+        @apply inline-flex items-center justify-center gap-2 font-medium transition-all duration-200 rounded-full;
+    }
 
-  .board-card {
-    @apply transition-all duration-200;
-  }
+    .btn:active {
+        @apply scale-[0.98];
+    }
 
-  .board-card:hover {
-    @apply -translate-y-1 shadow-medium;
-  }
+    /* Primary button - Coral */
+    .btn-primary {
+        @apply bg-primary-500 text-white hover:bg-primary-600 shadow-soft;
+    }
 
-  .btn {
-    @apply inline-flex items-center justify-center gap-2 font-medium transition-all cursor-pointer;
-  }
+    /* Secondary button - Coral outlined */
+    .btn-secondary {
+        @apply bg-transparent text-primary-500 border-2 border-primary-500 hover:bg-primary-50;
+    }
 
-  .btn:active {
-    @apply scale-[0.98];
-  }
+    /* Badge styling */
+    .badge {
+        @apply inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-cream-100 border border-cream-300;
+    }
 
-  .draw-line {
-    stroke-dasharray: 1000;
-    stroke-dashoffset: 1000;
-  }
+    .badge-text {
+        @apply text-sm font-medium text-brown-700;
+    }
 
-  .draw-line.animate {
-    animation: draw 1.5s ease-out forwards;
-  }
+    /* Icon container */
+    .icon-box {
+        @apply w-12 h-12 rounded-xl bg-accent-100 flex items-center justify-center;
+    }
 
-  .floating {
-    @apply animate-float;
-  }
+    .icon-box-lg {
+        @apply w-14 h-14 rounded-xl bg-accent-100 flex items-center justify-center;
+    }
 
-  .floating-delay-1 {
-    animation-delay: 0.5s;
-  }
+    /* Section styling */
+    .section-header {
+        @apply text-center max-w-3xl mx-auto mb-16;
+    }
 
-  .floating-delay-2 {
-    animation-delay: 1s;
-  }
+    .section-title {
+        @apply text-3xl sm:text-4xl lg:text-5xl font-bold text-brown-800 mb-4;
+    }
 
-  .floating-delay-3 {
-    animation-delay: 1.5s;
-  }
+    .section-subtitle {
+        @apply text-lg text-brown-600 max-w-2xl mx-auto;
+    }
+
+    /* Feature card */
+    .feature-card {
+        @apply bg-white rounded-2xl p-6 lg:p-8 border border-cream-300 shadow-soft transition-all duration-200 hover:shadow-medium hover:-translate-y-0.5;
+    }
+
+    /* Stat number */
+    .stat-number {
+        @apply text-3xl lg:text-4xl font-bold text-brown-800;
+        font-variant-numeric: tabular-nums;
+    }
+
+    /* Floating user avatar */
+    .floating-avatar {
+        @apply absolute flex items-center gap-2 animate-float;
+    }
+
+    .floating-avatar-img {
+        @apply w-10 h-10 rounded-full border-2 border-white shadow-medium overflow-hidden;
+    }
+
+    .floating-avatar-name {
+        @apply px-3 py-1 bg-brown-800 text-white text-sm font-medium rounded-full shadow-soft;
+    }
+
+    /* Sticky note style */
+    .sticky-note {
+        @apply bg-accent-200 rounded-lg p-4 shadow-soft transform rotate-2;
+    }
+
+    /* User cursor */
+    .user-cursor {
+        @apply absolute flex items-center gap-1;
+    }
+
+    .user-cursor-label {
+        @apply px-2 py-0.5 text-xs font-medium text-white rounded-full;
+    }
 }
 
-/* Keyframes for draw animation */
-@keyframes draw {
-  from {
-    stroke-dashoffset: 1000;
-  }
+/* Floating animation */
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
 
-  to {
-    stroke-dashoffset: 0;
-  }
+.animate-float {
+    animation: float 3s ease-in-out infinite;
+}
+
+.animate-float-delayed {
+    animation: float 3s ease-in-out infinite;
+    animation-delay: 1s;
+}
+
+.animate-float-slow {
+    animation: float 4s ease-in-out infinite;
+    animation-delay: 0.5s;
+}
+
+/* Subtle animations */
+@keyframes fade-in-up {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-in-up {
+    animation: fade-in-up 0.5s ease-out;
+}
+
+/* Pulse for cursors */
+@keyframes cursor-pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+.animate-cursor-pulse {
+    animation: cursor-pulse 2s ease-in-out infinite;
+}
+
+/* Scroll reveal - subtle */
+[data-scroll] {
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+[data-scroll].visible {
+    opacity: 1;
+    transform: translateY(0);
 }

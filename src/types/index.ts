@@ -43,6 +43,7 @@ export interface Board {
     updatedAt: string;
     ownerId: string;
     organizationId?: string;
+    folderId?: string;
     isFavorite: boolean;
     isDeleted: boolean;
     deletedAt?: string;
@@ -50,7 +51,11 @@ export interface Board {
     collaborators: Collaborator[];
     template?: string;
     data?: unknown;
+    isShared?: boolean;
 }
+
+// Re-export database types
+export * from './database.types';
 
 export interface OrganizationMember {
     userId: string;
@@ -103,3 +108,21 @@ export interface Notification {
     createdAt: string;
     read: boolean;
 }
+
+export interface TeamInvitation {
+    id: string;
+    organizationId: string;
+    organizationName?: string;
+    organizationLogo?: string;
+    inviterId: string;
+    inviterName?: string;
+    inviteeEmail: string;
+    inviteeId?: string;
+    role: 'admin' | 'editor' | 'viewer';
+    status: 'pending' | 'accepted' | 'declined' | 'cancelled';
+    inviteToken?: string;
+    expiresAt?: string;
+    createdAt: string;
+    updatedAt: string;
+}
+

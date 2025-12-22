@@ -16,27 +16,27 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
                 {/* Logo */}
                 <div className="mb-10">
                     <Link to="/" className="inline-flex items-center gap-2">
-                        <div className="w-10 h-10 rounded-xl bg-primary-600 flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-xl bg-gray-900 flex items-center justify-center">
                             <Sparkles className="w-5 h-5 text-white" />
                         </div>
-                        <span className="text-xl font-bold text-slate-900">
-                            Canvas<span className="text-primary-600">AI</span>
+                        <span className="text-xl font-bold text-gray-900">
+                            Canvas<span className="text-gray-400">AI</span>
                         </span>
                     </Link>
                 </div>
 
                 {/* Form Container */}
                 <div className="w-full max-w-sm">
-                    <h1 className="text-2xl font-bold text-slate-900 mb-2">{title}</h1>
+                    <h1 className="text-2xl font-bold text-gray-900 mb-2">{title}</h1>
                     {subtitle && (
-                        <p className="text-slate-600 mb-8">{subtitle}</p>
+                        <p className="text-gray-500 mb-8">{subtitle}</p>
                     )}
                     {children}
                 </div>
             </div>
 
             {/* Right Side - Illustration */}
-            <div className="hidden lg:flex lg:w-1/2 bg-primary-600 items-center justify-center p-12">
+            <div className="hidden lg:flex lg:w-1/2 bg-gray-900 items-center justify-center p-12">
                 <div className="max-w-lg">
                     {/* SVG Illustration */}
                     <svg
@@ -136,7 +136,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
                         <h2 className="text-2xl font-bold text-white mb-3">
                             Bring your ideas to life
                         </h2>
-                        <p className="text-primary-100">
+                        <p className="text-gray-400">
                             Join thousands of teams using CanvasAI to create, collaborate, and innovate together.
                         </p>
                     </div>
