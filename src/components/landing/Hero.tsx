@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import gsap from 'gsap';
 import { Lightbulb } from 'lucide-react';
 import { Button } from '../ui/button';
+import { useAuth } from '../../contexts/AuthContext';
 
 // Floating user data with updated names
 const floatingUsers = [
@@ -15,7 +16,17 @@ const floatingUsers = [
 
 export function Hero() {
     const navigate = useNavigate();
+    const { isAuthenticated } = useAuth();
     const heroRef = useRef<HTMLDivElement>(null);
+
+    const handleCreateBoard = () => {
+        // If user is logged in, go to dashboard; otherwise go to signup
+        if (isAuthenticated) {
+            navigate('/dashboard');
+        } else {
+            navigate('/signup');
+        }
+    };
 
     useEffect(() => {
         if (!heroRef.current) return;
@@ -234,7 +245,7 @@ export function Hero() {
                 <div className="hero-buttons flex flex-col sm:flex-row gap-4 justify-center">
                     <Button
                         size="lg"
-                        onClick={() => navigate('/signup')}
+                        onClick={handleCreateBoard}
                         className="bg-gray-900 hover:bg-gray-800 text-white rounded-full px-8 py-6 text-base font-semibold shadow-md hover:shadow-lg transition-all duration-200"
                     >
                         Create a whiteboard for free
