@@ -11,9 +11,12 @@ import { supabase } from "../lib/supabase";
 import {
   fetchUserWhiteboards,
   fetchSharedWhiteboards,
+  fetchDeletedWhiteboards,
   createWhiteboard as createWhiteboardService,
   updateWhiteboard as updateWhiteboardService,
   deleteWhiteboard as deleteWhiteboardService,
+  restoreWhiteboard as restoreWhiteboardService,
+  permanentlyDeleteWhiteboard as permanentlyDeleteWhiteboardService,
   duplicateWhiteboard as duplicateWhiteboardService,
 } from "../lib/services/whiteboardService";
 
@@ -142,7 +145,8 @@ function transformWhiteboard(wb: DbWhiteboard, isShared = false): Board {
     ownerId: wb.user_id || "",
     folderId: wb.folder_id || undefined,
     isFavorite,
-    isDeleted: false,
+    isDeleted: wb.is_deleted || false,
+    deletedAt: wb.deleted_at || undefined,
     tags: [],
     collaborators: [],
     data: wb.data,
@@ -191,6 +195,13 @@ export function BoardProvider({ children }: { children: ReactNode }) {
       );
 
       setBoards(uniqueBoards);
+
+      // Fetch deleted boards
+      const deletedWhiteboards = await fetchDeletedWhiteboards(user.id);
+      const deletedBoardsList = deletedWhiteboards.map((wb) =>
+        transformWhiteboard(wb, false)
+      );
+      setDeletedBoards(deletedBoardsList);
 
       // Fetch folders
       const { data: folderData } = await supabase
@@ -388,6 +399,7 @@ export function BoardProvider({ children }: { children: ReactNode }) {
         title,
         user_id: user.id,
         folder_id: folderId || null,
+        organization_id: currentOrganization?.id || null,
         data: boardData,
         preview: null,
       });
@@ -437,48 +449,41 @@ export function BoardProvider({ children }: { children: ReactNode }) {
   };
 
   /**
-   * Delete a board (hard delete)
+   * Delete a board (soft delete - move to trash)
    */
   const deleteBoard = async (id: string): Promise<void> => {
+    await deleteWhiteboardService(id);
+    
     const board = boards.find((b) => b.id === id);
     if (board) {
-      // Move to deleted boards for undo capability
+      // Move to deleted boards
       setDeletedBoards((prev) => [
         { ...board, isDeleted: true, deletedAt: new Date().toISOString() },
         ...prev,
       ]);
       setBoards((prev) => prev.filter((b) => b.id !== id));
-
-      // Delete from database
-      await deleteWhiteboardService(id);
     }
   };
 
   /**
-   * Restore a deleted board (note: this creates a new board since we hard delete)
+   * Restore a deleted board from trash
    */
   const restoreBoard = async (id: string): Promise<void> => {
+    await restoreWhiteboardService(id);
+    
     const board = deletedBoards.find((b) => b.id === id);
-    if (board && user?.id) {
-      // Re-create the board
-      const newWhiteboard = await createWhiteboardService({
-        title: board.title,
-        user_id: user.id,
-        folder_id: board.folderId || null,
-        data: board.data as Record<string, unknown> | null,
-        preview: board.thumbnail || null,
-      });
-
-      const restoredBoard = transformWhiteboard(newWhiteboard);
+    if (board) {
+      const restoredBoard = { ...board, isDeleted: false, deletedAt: undefined };
       setDeletedBoards((prev) => prev.filter((b) => b.id !== id));
       setBoards((prev) => [restoredBoard, ...prev]);
     }
   };
 
   /**
-   * Permanently delete a board
+   * Permanently delete a board (hard delete)
    */
   const permanentlyDeleteBoard = async (id: string): Promise<void> => {
+    await permanentlyDeleteWhiteboardService(id);
     setDeletedBoards((prev) => prev.filter((b) => b.id !== id));
   };
 

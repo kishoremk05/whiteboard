@@ -357,6 +357,55 @@ export const invitationService = {
     },
 
     /**
+     * Remove a member from an organization
+     */
+    async removeMember(
+        organizationId: string,
+        userId: string
+    ): Promise<{ success: boolean; error?: string }> {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                return { success: false, error: 'Not authenticated' };
+            }
+
+            // Check if current user is admin of the organization
+            const { data: currentMember } = await supabase
+                .from('organization_members')
+                .select('role')
+                .eq('organization_id', organizationId)
+                .eq('user_id', user.id)
+                .single();
+
+            if (!currentMember || currentMember.role !== 'admin') {
+                return { success: false, error: 'Only admins can remove members' };
+            }
+
+            // Prevent removing yourself
+            if (userId === user.id) {
+                return { success: false, error: 'You cannot remove yourself from the organization' };
+            }
+
+            // Remove the member
+            const { error } = await supabase
+                .from('organization_members')
+                .delete()
+                .eq('organization_id', organizationId)
+                .eq('user_id', userId);
+
+            if (error) {
+                console.error('Error removing member:', error);
+                return { success: false, error: error.message };
+            }
+
+            return { success: true };
+        } catch (error) {
+            console.error('Error removing member:', error);
+            return { success: false, error: 'Failed to remove member' };
+        }
+    },
+
+    /**
      * Send invitation email (placeholder for future implementation)
      */
     async sendInvitationEmail(

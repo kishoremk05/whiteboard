@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { Toaster } from 'sonner';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { BoardProvider } from './contexts/BoardContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import { TooltipProvider } from './components/ui/tooltip';
 import { CommandPalette } from './components/search/CommandPalette';
 
@@ -165,23 +166,25 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <BoardProvider>
-          <TooltipProvider>
-            <AppRoutes />
-            <GlobalCommandPalette />
-            <Toaster
-              position="bottom-right"
-              toastOptions={{
-                style: {
-                  background: 'white',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '12px',
-                  boxShadow: '0 4px 20px -2px rgba(0, 0, 0, 0.1)',
-                },
-              }}
-            />
-          </TooltipProvider>
-        </BoardProvider>
+        <ThemeProvider>
+          <BoardProvider>
+            <TooltipProvider>
+              <AppRoutes />
+              <GlobalCommandPalette />
+              <Toaster
+                position="bottom-right"
+                toastOptions={{
+                  style: {
+                    background: 'white',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '12px',
+                    boxShadow: '0 4px 20px -2px rgba(0, 0, 0, 0.1)',
+                  },
+                }}
+              />
+            </TooltipProvider>
+          </BoardProvider>
+        </ThemeProvider>
       </AuthProvider>
     </Router>
   );

@@ -49,7 +49,10 @@ export interface DbWhiteboard {
     preview: string | null; // text - base64 image or URL
     user_id: string | null; // uuid - owner
     folder_id: string | null; // uuid
+    organization_id: string | null; // uuid - optional organization
     metadata: Record<string, unknown> | null; // jsonb - for favorites, tags, etc
+    is_deleted: boolean | null; // soft delete flag
+    deleted_at: string | null; // timestamp - when deleted
     created_at: string | null; // timestamp
     updated_at: string | null; // timestamp
 }
@@ -194,11 +197,14 @@ export interface SystemMetric {
 // Insert/Update Types (for mutations)
 // ============================================================================
 
-export type WhiteboardInsert = Omit<DbWhiteboard, 'id' | 'created_at' | 'updated_at' | 'metadata'> & {
+export type WhiteboardInsert = Omit<DbWhiteboard, 'id' | 'created_at' | 'updated_at' | 'metadata' | 'is_deleted' | 'deleted_at' | 'organization_id'> & {
     id?: string;
     created_at?: string;
     updated_at?: string;
     metadata?: Record<string, unknown> | null;
+    is_deleted?: boolean | null;
+    deleted_at?: string | null;
+    organization_id?: string | null;
 };
 
 export type WhiteboardUpdate = Partial<Omit<DbWhiteboard, 'id' | 'created_at'>>;

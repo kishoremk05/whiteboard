@@ -170,6 +170,36 @@ export function Team() {
         toast.success('Invite link copied to clipboard');
     };
 
+    const handleRemoveMember = async (userId: string, userName: string) => {
+        if (!currentOrganization?.id) {
+            toast.error('No organization selected');
+            return;
+        }
+
+        // Confirm removal
+        if (!window.confirm(`Are you sure you want to remove ${userName} from the team?`)) {
+            return;
+        }
+
+        try {
+            const result = await invitationService.removeMember(
+                currentOrganization.id,
+                userId
+            );
+            
+            if (!result.success) {
+                toast.error(result.error || 'Failed to remove member');
+            } else {
+                toast.success(`${userName} has been removed from the team`);
+                // Reload the page to refresh organization data
+                window.location.reload();
+            }
+        } catch (err) {
+            console.error('Error removing member:', err);
+            toast.error('Failed to remove member');
+        }
+    };
+
     const stats = currentOrganization ? [
         {
             label: 'Team Members',
@@ -518,7 +548,10 @@ export function Team() {
                                                         Send Message
                                                     </DropdownMenuItem>
                                                     <DropdownMenuSeparator />
-                                                    <DropdownMenuItem className="text-red-600 focus:text-red-600 focus:bg-red-50 gap-2">
+                                                    <DropdownMenuItem 
+                                                        className="text-red-600 focus:text-red-600 focus:bg-red-50 gap-2"
+                                                        onClick={() => handleRemoveMember(member.userId, member.user.name)}
+                                                    >
                                                         <Trash2 className="w-4 h-4" />
                                                         Remove Member
                                                     </DropdownMenuItem>

@@ -16,6 +16,7 @@ import {
   Star,
   Zap,
   X,
+  Loader2,
 } from "lucide-react";
 import {
   Dialog,
@@ -26,9 +27,10 @@ import {
 } from "../ui/dialog";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
-import { templates } from "../../data/mockData";
+import { fetchTemplates } from "../../lib/services/templateService";
 import { useBoards } from "../../contexts/BoardContext";
 import { cn } from "../../lib/utils";
+import type { DbTemplate } from "../../types/database.types";
 
 interface TemplateGalleryProps {
   open: boolean;
@@ -90,6 +92,23 @@ export function TemplateGallery({ open, onOpenChange }: TemplateGalleryProps) {
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [previewTemplate, setPreviewTemplate] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [templates, setTemplates] = useState<DbTemplate[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch templates from database
+  useEffect(() => {
+    const loadTemplates = async () => {
+      try {
+        const data = await fetchTemplates();
+        setTemplates(data);
+      } catch (error) {
+        console.error("Failed to load templates:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadTemplates();
+  }, []);
 
   const filteredTemplates = selectedCategory
     ? templates.filter((t) => t.category === selectedCategory)
@@ -97,7 +116,7 @@ export function TemplateGallery({ open, onOpenChange }: TemplateGalleryProps) {
 
   const handleCreateFromTemplate = async () => {
     const template = templates.find((t) => t.id === selectedTemplate);
-    if (template) {
+    if (template && template.name) {
       setIsCreating(true);
       // Simulate creation delay for better UX
       await new Promise((resolve) => setTimeout(resolve, 800));
@@ -205,53 +224,67 @@ export function TemplateGallery({ open, onOpenChange }: TemplateGalleryProps) {
 
         {/* Content */}
         <div className="flex-1 overflow-hidden flex">
-          {/* Templates Grid */}
-          <div
-            className={cn(
-              "flex-1 overflow-y-auto p-6 transition-all duration-300",
-              previewTemplate ? "w-1/2" : "w-full"
-            )}
-          >
-            <div
-              className={cn(
-                "grid gap-4 transition-all duration-300",
-                previewTemplate
-                  ? "grid-cols-1 lg:grid-cols-2"
-                  : "grid-cols-2 md:grid-cols-3"
-              )}
-            >
-              {filteredTemplates.map((template, index) => {
-                const colors = categoryColors[template.category];
-                const stats = templateStats[template.id] || {
-                  uses: "1K+",
-                  rating: 4.5,
-                };
+          {/* Loading State */}
+          {isLoading ? (
+            <div className="flex-1 flex items-center justify-center py-16">
+              <div className="flex flex-col items-center gap-3">
+                <Loader2 className="w-8 h-8 text-slate-400 animate-spin" />
+                <p className="text-sm text-slate-500">Loading templates...</p>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Templates Grid */}
+              <div
+                className={cn(
+                  "flex-1 overflow-y-auto p-6 transition-all duration-300",
+                  previewTemplate ? "w-1/2" : "w-full"
+                )}
+              >
+                <div
+                  className={cn(
+                    "grid gap-4 transition-all duration-300",
+                    previewTemplate
+                      ? "grid-cols-1 lg:grid-cols-2"
+                      : "grid-cols-2 md:grid-cols-3"
+                  )}
+                >
+                  {filteredTemplates.map((template, index) => {
+                    // Safely get category, fallback to 'general'
+                    const category = template.category && ['general', 'education', 'business', 'creative'].includes(template.category) 
+                      ? template.category 
+                      : 'general';
+                    const colors = categoryColors[category as keyof typeof categoryColors];
+                    const stats = templateStats[template.id] || {
+                      uses: "1K+",
+                      rating: 4.5,
+                    };
 
-                return (
-                  <button
-                    key={template.id}
-                    onClick={() => setSelectedTemplate(template.id)}
-                    onDoubleClick={() => setPreviewTemplate(template.id)}
-                    className={cn(
-                      "group relative p-4 rounded-2xl border-2 text-left transition-all duration-300",
-                      "hover:shadow-lg hover:-translate-y-0.5",
-                      "animate-in fade-in-0 slide-in-from-bottom-2",
-                      selectedTemplate === template.id
-                        ? "border-primary-500 bg-primary-50/50 shadow-lg shadow-primary-500/10"
-                        : "border-slate-200 bg-white hover:border-slate-300"
-                    )}
-                    style={{
-                      animationDelay: `${index * 50}ms`,
-                      animationFillMode: "both",
-                    }}
-                  >
-                    {/* Icon */}
-                    <div className="flex items-start justify-between mb-3">
-                      <div
+                    return (
+                      <button
+                        key={template.id}
+                        onClick={() => setSelectedTemplate(template.id)}
+                        onDoubleClick={() => setPreviewTemplate(template.id)}
                         className={cn(
-                          "w-14 h-14 rounded-xl flex items-center justify-center transition-transform duration-300 group-hover:scale-110",
-                          colors.bg,
-                          colors.text
+                          "group relative p-4 rounded-2xl border-2 text-left transition-all duration-300",
+                          "hover:shadow-lg hover:-translate-y-0.5",
+                          "animate-in fade-in-0 slide-in-from-bottom-2",
+                          selectedTemplate === template.id
+                            ? "border-primary-500 bg-primary-50/50 shadow-lg shadow-primary-500/10"
+                            : "border-slate-200 bg-white hover:border-slate-300"
+                        )}
+                        style={{
+                          animationDelay: `${index * 50}ms`,
+                          animationFillMode: "both",
+                        }}
+                      >
+                        {/* Icon */}
+                        <div className="flex items-start justify-between mb-3">
+                          <div
+                            className={cn(
+                              "w-14 h-14 rounded-xl flex items-center justify-center transition-transform duration-300 group-hover:scale-110",
+                              colors.bg,
+                              colors.text
                         )}
                       >
                         {templateIcons[template.id] || (
@@ -270,13 +303,13 @@ export function TemplateGallery({ open, onOpenChange }: TemplateGalleryProps) {
                       </button>
                     </div>
 
-                    {/* Info */}
-                    <h4 className="font-semibold text-slate-900 mb-1 group-hover:text-primary-600 transition-colors">
-                      {template.name}
-                    </h4>
-                    <p className="text-sm text-slate-500 line-clamp-2 mb-3">
-                      {template.description}
-                    </p>
+                        {/* Info */}
+                        <h4 className="font-semibold text-slate-900 mb-1 group-hover:text-primary-600 transition-colors">
+                          {template.name || 'Untitled Template'}
+                        </h4>
+                        <p className="text-sm text-slate-500 line-clamp-2 mb-3">
+                          {template.description || 'No description'}
+                        </p>
 
                     {/* Stats */}
                     <div className="flex items-center gap-3 text-xs text-slate-400">
@@ -290,29 +323,31 @@ export function TemplateGallery({ open, onOpenChange }: TemplateGalleryProps) {
                       </div>
                     </div>
 
-                    {/* Category Badge */}
-                    <Badge
-                      variant="secondary"
-                      className={cn(
-                        "absolute top-3 right-3 capitalize text-xs rounded-full opacity-0 group-hover:opacity-100 transition-opacity",
-                        colors.bg,
-                        colors.text
-                      )}
-                    >
-                      {template.category}
-                    </Badge>
+                        {/* Category Badge */}
+                        <Badge
+                          variant="secondary"
+                          className={cn(
+                            "absolute top-3 right-3 capitalize text-xs rounded-full opacity-0 group-hover:opacity-100 transition-opacity",
+                            colors.bg,
+                            colors.text
+                          )}
+                        >
+                          {template.category || 'general'}
+                        </Badge>
 
-                    {/* Selected Indicator */}
-                    {selectedTemplate === template.id && (
-                      <div className="absolute top-3 right-3 w-6 h-6 rounded-full bg-primary-500 flex items-center justify-center shadow-lg">
-                        <Check className="w-3.5 h-3.5 text-white" />
-                      </div>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+                        {/* Selected Indicator */}
+                        {selectedTemplate === template.id && (
+                          <div className="absolute top-3 right-3 w-6 h-6 rounded-full bg-primary-500 flex items-center justify-center shadow-lg">
+                            <Check className="w-3.5 h-3.5 text-white" />
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </>
+          )}
 
           {/* Preview Panel */}
           {previewTemplate && previewedTemplate && (
@@ -334,11 +369,11 @@ export function TemplateGallery({ open, onOpenChange }: TemplateGalleryProps) {
                   <div
                     className={cn(
                       "w-20 h-20 rounded-2xl flex items-center justify-center",
-                      categoryColors[previewedTemplate.category].bg,
-                      categoryColors[previewedTemplate.category].text
+                      categoryColors[previewedTemplate?.category || 'general'].bg,
+                      categoryColors[previewedTemplate?.category || 'general'].text
                     )}
                   >
-                    {templateIcons[previewedTemplate.id] || (
+                    {templateIcons[previewedTemplate?.id || ''] || (
                       <Sparkles className="w-10 h-10" />
                     )}
                   </div>
@@ -350,24 +385,24 @@ export function TemplateGallery({ open, onOpenChange }: TemplateGalleryProps) {
                     <Badge
                       className={cn(
                         "capitalize text-xs rounded-full",
-                        categoryColors[previewedTemplate.category].bg,
-                        categoryColors[previewedTemplate.category].text
+                        categoryColors[previewedTemplate?.category || 'general'].bg,
+                        categoryColors[previewedTemplate?.category || 'general'].text
                       )}
                     >
-                      {previewedTemplate.category}
+                      {previewedTemplate?.category || 'general'}
                     </Badge>
                     <div className="flex items-center gap-1 text-xs text-slate-400">
                       <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
                       <span>
-                        {templateStats[previewedTemplate.id]?.rating || 4.5}
+                        {templateStats[previewedTemplate?.id || '']?.rating || 4.5}
                       </span>
                     </div>
                   </div>
                   <h4 className="font-semibold text-lg text-slate-900 mb-2">
-                    {previewedTemplate.name}
+                    {previewedTemplate?.name || 'Untitled Template'}
                   </h4>
                   <p className="text-sm text-slate-600 mb-4">
-                    {previewedTemplate.description}
+                    {previewedTemplate?.description || 'No description'}
                   </p>
 
                   {/* Features list */}

@@ -77,10 +77,10 @@ export interface Organization {
 
 export interface Template {
     id: string;
-    name: string;
-    description: string;
-    thumbnail: string;
-    category: 'general' | 'education' | 'business' | 'creative';
+    name: string | null;
+    description: string | null;
+    thumbnail?: string | null;
+    category: string | null;
     data?: unknown;
 }
 

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { Sparkles, Zap, Users, Layers, Lock } from 'lucide-react';
+import { Sparkles, Zap, Users, Lock, Layers, Palette } from 'lucide-react';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -9,56 +9,84 @@ const features = [
     {
         icon: Sparkles,
         title: 'AI-Powered Brainstorming',
-        description: 'Let AI help you organize ideas, suggest layouts, and generate mind maps automatically from your notes',
+        description: 'Let AI help you organize ideas, suggest layouts, and generate mind maps automatically.',
+        color: 'bg-yellow-400',
+        iconColor: 'text-gray-900',
+        rotate: '-rotate-1',
     },
     {
         icon: Zap,
-        title: 'Lightning Fast Performance',
-        description: 'Smoothly handle thousands of shapes, images, and annotations without lag',
+        title: 'Lightning Fast',
+        description: 'Handle thousands of shapes and annotations without any lag.',
+        color: 'bg-pink-400',
+        iconColor: 'text-white',
+        rotate: 'rotate-1',
     },
     {
         icon: Users,
         title: 'Real-time Collaboration',
-        description: 'See your team\'s cursors, edits, and sticky notes update instantly. No refresh needed',
+        description: "See your team's cursors and edits update instantly. No refresh needed.",
+        color: 'bg-blue-400',
+        iconColor: 'text-white',
+        rotate: '-rotate-2',
     },
     {
         icon: Lock,
-        title: 'Enterprise-Grade Security',
-        description: 'Your data is encrypted end-to-end with role-based access controls and SOC 2 compliance',
+        title: 'Enterprise Security',
+        description: 'Your data is encrypted and secure with SOC 2 compliance.',
+        color: 'bg-green-400',
+        iconColor: 'text-white',
+        rotate: 'rotate-2',
     },
     {
         icon: Layers,
-        title: 'Infinite Canvas Workspace',
-        description: 'Never run out of space. Pan, zoom, and organize your ideas across an unlimited digital canvas',
+        title: 'Infinite Canvas',
+        description: 'Never run out of space. Zoom in for details or out for the big picture.',
+        color: 'bg-purple-400',
+        iconColor: 'text-white',
+        rotate: '-rotate-1',
+    },
+    {
+        icon: Palette,
+        title: 'Beautiful Templates',
+        description: 'Start quickly with professionally designed templates for any use case.',
+        color: 'bg-orange-400',
+        iconColor: 'text-white',
+        rotate: 'rotate-1',
     },
 ];
 
 export function Features() {
     const sectionRef = useRef<HTMLElement>(null);
+    const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
 
     useEffect(() => {
         const ctx = gsap.context(() => {
-            gsap.from('.features-title', {
+            gsap.from('.features-header', {
                 scrollTrigger: {
-                    trigger: '.features-title',
-                    start: 'top 85%',
-                },
-                y: 24,
-                opacity: 0,
-                duration: 0.6,
-                immediateRender: false,
-            });
-
-            gsap.from('.feature-card', {
-                scrollTrigger: {
-                    trigger: '.features-container',
+                    trigger: sectionRef.current,
                     start: 'top 80%',
                 },
                 y: 30,
                 opacity: 0,
-                duration: 0.5,
-                stagger: 0.1,
-                immediateRender: false,
+                duration: 0.8,
+                ease: 'power2.out',
+            });
+
+            cardsRef.current.forEach((card, index) => {
+                if (card) {
+                    gsap.from(card, {
+                        scrollTrigger: {
+                            trigger: card,
+                            start: 'top 85%',
+                        },
+                        y: 40,
+                        opacity: 0,
+                        duration: 0.6,
+                        delay: index * 0.1,
+                        ease: 'power2.out',
+                    });
+                }
             });
         }, sectionRef);
 
@@ -67,116 +95,86 @@ export function Features() {
 
     return (
         <section ref={sectionRef} id="features" className="py-24 lg:py-32 bg-white relative overflow-hidden">
-            {/* Subtle noise/grain texture background */}
-            <div 
-                className="absolute inset-0 opacity-[0.4]"
-                style={{
-                    backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
-                }}
-            />
-            {/* Hand-drawn decorative elements */}
-            <svg className="absolute top-12 left-8 w-20 h-20 opacity-60" viewBox="0 0 80 80" fill="none">
-                <path d="M10 40 Q 20 10, 40 20 Q 60 30, 70 10" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" fill="none" />
-                <circle cx="70" cy="12" r="4" fill="#3B82F6" />
-            </svg>
+            {/* Decorative elements */}
+            <div className="absolute top-12 left-12 w-20 h-20 bg-yellow-100 rounded-full opacity-60" />
+            <div className="absolute top-32 right-20 text-5xl opacity-30">✦</div>
+            <div className="absolute bottom-20 left-1/4 w-3 h-3 bg-pink-400 rounded-full" />
+            <div className="absolute top-1/2 right-12 w-4 h-4 bg-blue-400 rounded-full" />
             
-            <svg className="absolute top-20 right-12 w-16 h-16 opacity-50" viewBox="0 0 64 64" fill="none">
-                <path d="M32 8 L36 28 L56 32 L36 36 L32 56 L28 36 L8 32 L28 28 Z" stroke="#3B82F6" strokeWidth="2" fill="none" />
+            {/* Hand-drawn decorative lines */}
+            <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20" viewBox="0 0 1440 800">
+                <path
+                    d="M100 200 Q 300 150, 400 200 Q 500 250, 600 180"
+                    stroke="#2D2A26"
+                    strokeWidth="2"
+                    strokeDasharray="6 8"
+                    fill="none"
+                />
+                <path
+                    d="M900 600 Q 1000 550, 1100 620 Q 1200 700, 1300 650"
+                    stroke="#2D2A26"
+                    strokeWidth="2"
+                    strokeDasharray="6 8"
+                    fill="none"
+                />
             </svg>
 
-            <svg className="absolute bottom-20 left-16 w-24 h-24 opacity-40" viewBox="0 0 96 96" fill="none">
-                <circle cx="48" cy="48" r="40" stroke="#3B82F6" strokeWidth="2" strokeDasharray="6 6" fill="none" />
-                <circle cx="48" cy="48" r="25" stroke="#3B82F6" strokeWidth="1.5" strokeDasharray="4 4" fill="none" />
-            </svg>
-
-            <svg className="absolute bottom-32 right-20 w-12 h-12 opacity-50" viewBox="0 0 48 48" fill="none">
-                <path d="M24 4 C 36 16, 44 24, 24 44 C 4 24, 12 16, 24 4" stroke="#E85A4F" strokeWidth="2" fill="none" />
-            </svg>
-
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-                {/* Section Header - Handwritten style */}
-                <div className="features-title text-center mb-16 lg:mb-20">
-                    <div className="inline-block relative">
-                        <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black text-gray-900" style={{ fontFamily: 'Georgia, serif' }}>
-                            Main Features
-                        </h2>
-                        {/* Hand-drawn underline */}
-                        <svg className="absolute -bottom-3 left-0 w-full h-6" viewBox="0 0 300 24" fill="none" preserveAspectRatio="none">
-                            <path d="M5 12 Q 75 4, 150 14 Q 225 24, 295 10" stroke="#3B82F6" strokeWidth="3" strokeLinecap="round" fill="none" />
-                        </svg>
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                {/* Section Header */}
+                <div className="features-header text-center max-w-3xl mx-auto mb-20">
+                    <div className="inline-flex items-center gap-2 bg-yellow-100 text-yellow-800 px-4 py-2 rounded-full text-sm font-medium mb-6">
+                        <Sparkles className="w-4 h-4" />
+                        Packed with features
                     </div>
-                    <p className="text-lg text-gray-500 mt-8 max-w-xl mx-auto">
-                        Everything you need to bring your ideas to life
+                    <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black text-gray-900 mb-6">
+                        Everything you need to{' '}
+                        <span className="relative">
+                            collaborate
+                            <svg className="absolute -bottom-2 left-0 w-full" viewBox="0 0 200 12" fill="none">
+                                <path d="M2 8 Q 50 2, 100 8 Q 150 14, 198 6" stroke="#FBBF24" strokeWidth="4" strokeLinecap="round" fill="none" />
+                            </svg>
+                        </span>
+                    </h2>
+                    <p className="text-lg text-gray-500">
+                        Powerful tools designed for creative teams who want to bring ideas to life together.
                     </p>
                 </div>
 
-                {/* Features - Organic layout with hand-drawn boxes */}
-                <div className="features-container relative">
-                    {/* Row 1 */}
-                    <div className="flex flex-wrap justify-center gap-6 lg:gap-8 mb-8">
-                        {features.slice(0, 3).map((feature, idx) => (
-                            <div
-                                key={feature.title}
-                                className="feature-card relative bg-white rounded-lg p-6 w-72 shadow-soft"
-                                style={{ transform: `rotate(${idx % 2 === 0 ? '-1deg' : '1deg'})` }}
-                            >
-                                {/* Hand-drawn border */}
-                                <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 288 140" preserveAspectRatio="none">
-                                    <rect x="4" y="4" width="280" height="132" rx="8" stroke="#3B82F6" strokeWidth="2" fill="none" strokeDasharray="0" />
-                                </svg>
-                                
-                                <div className="relative z-10">
-                                    <div className="w-12 h-12 rounded-xl bg-yellow-100 flex items-center justify-center mb-4">
-                                        <feature.icon className="w-6 h-6 text-yellow-700" />
-                                    </div>
-                                    <h3 className="text-lg font-bold text-gray-900 mb-2">{feature.title}</h3>
-                                    <p className="text-gray-500 text-sm">{feature.description}</p>
-                                </div>
+                {/* Features Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+                    {features.map((feature, index) => (
+                        <div
+                            key={feature.title}
+                            ref={(el) => { cardsRef.current[index] = el; }}
+                            className={`group relative bg-white rounded-2xl p-6 lg:p-8 border-2 border-gray-100 hover:border-gray-200 shadow-sm hover:shadow-xl transition-all duration-300 ${feature.rotate}`}
+                        >
+                            {/* Colored corner accent */}
+                            <div className={`absolute top-0 right-0 w-20 h-20 ${feature.color} opacity-10 rounded-bl-[80px] rounded-tr-2xl`} />
+                            
+                            {/* Icon */}
+                            <div className={`w-14 h-14 ${feature.color} rounded-2xl flex items-center justify-center mb-5 shadow-lg transform group-hover:scale-110 transition-transform duration-300`}>
+                                <feature.icon className={`w-7 h-7 ${feature.iconColor}`} />
                             </div>
-                        ))}
-                    </div>
-
-                    {/* Row 2 */}
-                    <div className="flex flex-wrap justify-center gap-6 lg:gap-8">
-                        {features.slice(3, 5).map((feature, idx) => (
-                            <div
-                                key={feature.title}
-                                className="feature-card relative bg-white rounded-lg p-6 w-72 shadow-soft"
-                                style={{ transform: `rotate(${idx % 2 === 0 ? '1deg' : '-1deg'})` }}
-                            >
-                                {/* Hand-drawn border */}
-                                <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 288 140" preserveAspectRatio="none">
-                                    <rect x="4" y="4" width="280" height="132" rx="8" stroke="#3B82F6" strokeWidth="2" fill="none" />
+                            
+                            {/* Content */}
+                            <h3 className="text-xl font-bold text-gray-900 mb-3">
+                                {feature.title}
+                            </h3>
+                            <p className="text-gray-500 leading-relaxed">
+                                {feature.description}
+                            </p>
+                            
+                            {/* Hover arrow */}
+                            <div className="mt-4 flex items-center text-gray-400 group-hover:text-gray-900 transition-colors">
+                                <span className="text-sm font-medium">Learn more</span>
+                                <svg className="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                 </svg>
-                                
-                                <div className="relative z-10">
-                                    <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center mb-4">
-                                        <feature.icon className="w-6 h-6 text-gray-700" />
-                                    </div>
-                                    <h3 className="text-lg font-bold text-gray-900 mb-2">{feature.title}</h3>
-                                    <p className="text-gray-500 text-sm">{feature.description}</p>
-                                </div>
                             </div>
-                        ))}
-                    </div>
-
-                    {/* Decorative connecting swoosh */}
-                    <svg className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full pointer-events-none opacity-20" viewBox="0 0 800 400" fill="none">
-                        <path d="M100 200 Q 250 100, 400 200 Q 550 300, 700 200" stroke="#3B82F6" strokeWidth="3" strokeDasharray="10 10" fill="none" />
-                    </svg>
-                </div>
-
-                {/* Bottom doodle */}
-                <div className="flex justify-center mt-16">
-                    <svg className="w-32 h-8 opacity-40" viewBox="0 0 128 32" fill="none">
-                        <path d="M4 16 Q 32 4, 64 16 Q 96 28, 124 16" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" fill="none" />
-                        <circle cx="64" cy="16" r="4" fill="#E85A4F" />
-                    </svg>
+                        </div>
+                    ))}
                 </div>
             </div>
-
-            {/* Dotted section divider */}
-            <div className="absolute bottom-0 left-0 right-0 border-b-2 border-dashed border-gray-200" />
         </section>
     );
 }

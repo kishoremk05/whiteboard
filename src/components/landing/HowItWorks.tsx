@@ -1,24 +1,42 @@
 import { useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { PenTool, Users, Sparkles, Share } from 'lucide-react';
 
 gsap.registerPlugin(ScrollTrigger);
 
 const steps = [
     {
         number: '01',
+        icon: PenTool,
         title: 'Create Your Board',
-        description: 'Start with a blank canvas or choose from pre-built templates. Add sticky notes, shapes, images, and text with intuitive drag-and-drop tools.',
+        description: 'Start with a blank canvas or choose from professional templates.',
+        color: 'bg-blue-500',
+        lightColor: 'bg-blue-100',
     },
     {
         number: '02',
-        title: 'Collaborate in Real-Time',
-        description: 'Invite team members via shareable links. Watch as everyone\'s ideas appear instantly with live cursors and synchronized updates.',
+        icon: Users,
+        title: 'Invite Your Team',
+        description: 'Share with collaborators and work together in real-time.',
+        color: 'bg-green-500',
+        lightColor: 'bg-green-100',
     },
     {
         number: '03',
-        title: 'Export & Share',
-        description: 'Download your board as PNG, PDF, or SVG. Present directly from the app, or integrate with your favorite productivity tools.',
+        icon: Sparkles,
+        title: 'Enhance with AI',
+        description: 'Let AI organize ideas, suggest layouts, and automate tasks.',
+        color: 'bg-purple-500',
+        lightColor: 'bg-purple-100',
+    },
+    {
+        number: '04',
+        icon: Share,
+        title: 'Share & Export',
+        description: 'Present, embed, or export your board in any format.',
+        color: 'bg-orange-500',
+        lightColor: 'bg-orange-100',
     },
 ];
 
@@ -27,25 +45,38 @@ export function HowItWorks() {
 
     useEffect(() => {
         const ctx = gsap.context(() => {
-            gsap.from('.hiw-title', {
+            gsap.from('.hiw-header', {
                 scrollTrigger: {
-                    trigger: '.hiw-title',
-                    start: 'top 85%',
-                },
-                y: 24,
-                opacity: 0,
-                duration: 0.6,
-            });
-
-            gsap.from('.step-card', {
-                scrollTrigger: {
-                    trigger: '.steps-container',
+                    trigger: sectionRef.current,
                     start: 'top 80%',
                 },
                 y: 30,
                 opacity: 0,
-                duration: 0.5,
+                duration: 0.8,
+                ease: 'power2.out',
+            });
+
+            gsap.from('.hiw-step', {
+                scrollTrigger: {
+                    trigger: '.hiw-steps',
+                    start: 'top 80%',
+                },
+                y: 40,
+                opacity: 0,
+                duration: 0.6,
                 stagger: 0.15,
+                ease: 'power2.out',
+            });
+
+            gsap.from('.hiw-connector', {
+                scrollTrigger: {
+                    trigger: '.hiw-steps',
+                    start: 'top 75%',
+                },
+                scaleX: 0,
+                duration: 0.8,
+                stagger: 0.2,
+                ease: 'power2.out',
             });
         }, sectionRef);
 
@@ -53,100 +84,79 @@ export function HowItWorks() {
     }, []);
 
     return (
-        <section ref={sectionRef} id="how-it-works" className="py-24 lg:py-32 bg-white relative overflow-hidden">
-            {/* Subtle noise/grain texture background */}
+        <section ref={sectionRef} id="how-it-works" className="py-24 lg:py-32 bg-gray-50 relative overflow-hidden">
+            {/* Background decoration */}
+            <div className="absolute inset-0 opacity-40">
+                <div className="absolute top-20 left-10 w-32 h-32 bg-yellow-200 rounded-full blur-3xl" />
+                <div className="absolute bottom-20 right-10 w-40 h-40 bg-blue-200 rounded-full blur-3xl" />
+            </div>
+
+            {/* Dot pattern */}
             <div 
-                className="absolute inset-0 opacity-[0.4]"
+                className="absolute inset-0 opacity-[0.3]"
                 style={{
-                    backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+                    backgroundImage: `radial-gradient(circle, #d1d5db 1px, transparent 1px)`,
+                    backgroundSize: '24px 24px',
                 }}
             />
-            {/* Hand-drawn decorative doodles */}
-            <svg className="absolute top-16 right-8 w-24 h-24 opacity-50" viewBox="0 0 96 96" fill="none">
-                <path d="M20 48 Q 48 20, 76 48 Q 48 76, 20 48" stroke="#3B82F6" strokeWidth="2" fill="none" />
-                <circle cx="48" cy="48" r="8" stroke="#E85A4F" strokeWidth="2" fill="none" />
-            </svg>
 
-            <svg className="absolute top-1/2 left-4 w-16 h-32 opacity-40" viewBox="0 0 64 128" fill="none">
-                <path d="M32 8 Q 8 32, 32 64 Q 56 96, 32 120" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" fill="none" />
-                <circle cx="32" cy="8" r="4" fill="#3B82F6" />
-                <circle cx="32" cy="120" r="4" fill="#3B82F6" />
-            </svg>
-
-            <svg className="absolute bottom-16 right-16 w-20 h-20 opacity-40" viewBox="0 0 80 80" fill="none">
-                <path d="M40 10 L44 36 L70 40 L44 44 L40 70 L36 44 L10 40 L36 36 Z" stroke="#E85A4F" strokeWidth="2" fill="none" />
-            </svg>
-
-            {/* Lightbulb doodle */}
-            <svg className="absolute top-24 left-12 w-12 h-16 opacity-50" viewBox="0 0 48 64" fill="none">
-                <ellipse cx="24" cy="24" rx="16" ry="18" stroke="#FBBF24" strokeWidth="2" fill="none" />
-                <path d="M18 42 L18 52 L30 52 L30 42" stroke="#FBBF24" strokeWidth="2" fill="none" />
-                <path d="M20 56 L28 56" stroke="#FBBF24" strokeWidth="2" strokeLinecap="round" />
-                <path d="M24 6 L24 2" stroke="#FBBF24" strokeWidth="2" strokeLinecap="round" />
-                <path d="M8 24 L4 24" stroke="#FBBF24" strokeWidth="2" strokeLinecap="round" />
-                <path d="M40 24 L44 24" stroke="#FBBF24" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-
-            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                 {/* Section Header */}
-                <div className="hiw-title text-center mb-16 lg:mb-20">
-                    <div className="inline-block relative">
-                        <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black text-gray-900" style={{ fontFamily: 'Georgia, serif' }}>
-                            How It Works
-                        </h2>
-                        <svg className="absolute -bottom-3 left-0 w-full h-6" viewBox="0 0 300 24" fill="none" preserveAspectRatio="none">
-                            <path d="M5 12 Q 75 20, 150 10 Q 225 0, 295 14" stroke="#3B82F6" strokeWidth="3" strokeLinecap="round" fill="none" />
-                        </svg>
+                <div className="hiw-header text-center mb-20">
+                    <div className="inline-flex items-center gap-2 bg-gray-900 text-white px-4 py-2 rounded-full text-sm font-medium mb-6">
+                        <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                        Simple & Intuitive
                     </div>
-                    <p className="text-lg text-gray-500 mt-8 max-w-xl mx-auto">
-                        Get started in just a few simple steps
+                    <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black text-gray-900 mb-6">
+                        Get started in{' '}
+                        <span className="relative inline-block">
+                            minutes
+                            <div className="absolute -bottom-1 left-0 right-0 h-3 bg-yellow-300 -z-10 rounded" />
+                        </span>
+                    </h2>
+                    <p className="text-lg text-gray-500 max-w-2xl mx-auto">
+                        From sign-up to your first collaborative board in under 5 minutes.
                     </p>
                 </div>
 
-                {/* Steps - Hand-drawn style boxes */}
-                <div className="steps-container flex flex-col lg:flex-row gap-8 lg:gap-6 items-center lg:items-stretch justify-center">
-                    {steps.map((step, idx) => (
-                        <div
-                            key={step.number}
-                            className="step-card relative bg-white rounded-lg p-8 w-full max-w-xs shadow-soft"
-                            style={{ transform: `rotate(${idx === 1 ? '0deg' : idx === 0 ? '-2deg' : '2deg'})` }}
-                        >
-                            {/* Hand-drawn border */}
-                            <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 280 200" preserveAspectRatio="none">
-                                <rect x="4" y="4" width="272" height="192" rx="8" stroke="#3B82F6" strokeWidth="2.5" fill="none" />
-                            </svg>
-
-                            <div className="relative z-10 text-center">
-                                {/* Number badge */}
-                                <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gray-900 text-white flex items-center justify-center text-2xl font-bold shadow-md">
-                                    {step.number}
+                {/* Steps */}
+                <div className="hiw-steps relative">
+                    {/* Connection line */}
+                    <div className="hidden lg:block absolute top-20 left-[12%] right-[12%] h-0.5 bg-gray-200" />
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-6">
+                        {steps.map((step, index) => (
+                            <div key={step.number} className="hiw-step relative">
+                                {/* Step card */}
+                                <div className="bg-white rounded-3xl p-6 lg:p-8 shadow-lg border border-gray-100 text-center relative z-10 hover:shadow-xl transition-shadow duration-300">
+                                    {/* Number badge */}
+                                    <div className={`absolute -top-4 left-1/2 -translate-x-1/2 w-8 h-8 ${step.color} rounded-full flex items-center justify-center shadow-lg`}>
+                                        <span className="text-white text-sm font-bold">{index + 1}</span>
+                                    </div>
+                                    
+                                    {/* Icon */}
+                                    <div className={`w-16 h-16 ${step.lightColor} rounded-2xl flex items-center justify-center mx-auto mb-5 mt-2`}>
+                                        <step.icon className={`w-8 h-8 ${step.color.replace('bg-', 'text-')}`} />
+                                    </div>
+                                    
+                                    {/* Content */}
+                                    <h3 className="text-lg font-bold text-gray-900 mb-2">{step.title}</h3>
+                                    <p className="text-gray-500 text-sm leading-relaxed">{step.description}</p>
                                 </div>
-                                <h3 className="text-xl font-bold text-gray-900 mb-3">{step.title}</h3>
-                                <p className="text-gray-500">{step.description}</p>
+                                
+                                {/* Connector arrow for desktop */}
+                                {index < steps.length - 1 && (
+                                    <div className="hiw-connector hidden lg:block absolute top-20 -right-3 z-20">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                            <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                        </svg>
+                                    </div>
+                                )}
                             </div>
-
-                            {/* Connecting arrow (not on last item) */}
-                            {idx < 2 && (
-                                <svg className="hidden lg:block absolute -right-8 top-1/2 -translate-y-1/2 w-12 h-8" viewBox="0 0 48 32" fill="none">
-                                    <path d="M4 16 Q 24 8, 36 16 Q 24 24, 4 16" stroke="#3B82F6" strokeWidth="2" fill="none" />
-                                    <path d="M32 10 L40 16 L32 22" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-                                </svg>
-                            )}
-                        </div>
-                    ))}
-                </div>
-
-                {/* Bottom decorative element */}
-                <div className="flex justify-center mt-16">
-                    <svg className="w-48 h-12 opacity-30" viewBox="0 0 192 48" fill="none">
-                        <path d="M8 24 Q 48 8, 96 24 Q 144 40, 184 24" stroke="#3B82F6" strokeWidth="2" strokeDasharray="6 4" fill="none" />
-                        <circle cx="96" cy="24" r="6" stroke="#E85A4F" strokeWidth="2" fill="none" />
-                    </svg>
+                        ))}
+                    </div>
                 </div>
             </div>
-
-            {/* Dotted section divider */}
-            <div className="absolute bottom-0 left-0 right-0 border-b-2 border-dashed border-gray-200" />
         </section>
     );
 }

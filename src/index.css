@@ -220,3 +220,23 @@
     opacity: 1;
     transform: translateY(0);
 }
+
+/* TLDraw - Ensure toolbar and UI elements are visible */
+.tl-container {
+    position: absolute !important;
+    inset: 0 !important;
+}
+
+/* Ensure TLDraw toolbar is visible */
+.tlui-layout {
+    z-index: 10 !important;
+}
+
+.tlui-toolbar {
+    z-index: 100 !important;
+}
+
+/* Override any conflicting backgrounds */
+.tl-canvas {
+    background: white !important;
+}

@@ -107,15 +107,68 @@ export async function updateWhiteboard(id: string, updates: WhiteboardUpdate): P
 }
 
 /**
- * Delete a whiteboard (hard delete)
+ * Soft delete a whiteboard (move to trash)
  */
-export async function deleteWhiteboard(id: string): Promise<void> {
+export async function deleteWhiteboard(id: string): Promise<DbWhiteboard> {
+    const { data, error } = await supabase
+        .from('whiteboards')
+        .update({
+            is_deleted: true,
+            deleted_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
+}
+
+/**
+ * Restore a deleted whiteboard from trash
+ */
+export async function restoreWhiteboard(id: string): Promise<DbWhiteboard> {
+    const { data, error } = await supabase
+        .from('whiteboards')
+        .update({
+            is_deleted: false,
+            deleted_at: null,
+            updated_at: new Date().toISOString()
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
+}
+
+/**
+ * Permanently delete a whiteboard (hard delete)
+ */
+export async function permanentlyDeleteWhiteboard(id: string): Promise<void> {
     const { error } = await supabase
         .from('whiteboards')
         .delete()
         .eq('id', id);
 
     if (error) throw error;
+}
+
+/**
+ * Fetch deleted whiteboards (trash)
+ */
+export async function fetchDeletedWhiteboards(userId: string): Promise<DbWhiteboard[]> {
+    const { data, error } = await supabase
+        .from('whiteboards')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('is_deleted', true)
+        .order('deleted_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
 }
 
 /**

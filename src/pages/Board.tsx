@@ -60,6 +60,7 @@ export function Board() {
     })
   );
   const saveTimeoutRef = useRef<number | undefined>(undefined);
+  const hasLoadedRef = useRef(false); // Prevent re-loading after initial load
 
   const board = boards.find((b) => b.id === id);
 
@@ -81,21 +82,39 @@ export function Board() {
     }
   }, [board, loadCollaborators]);
 
-  // Load initial content from database
+  // Load initial content from database - ONLY ONCE
   useEffect(() => {
-    if (board?.data && store) {
+    // Only load once per board
+    if (hasLoadedRef.current || !board?.id || !store) return;
+    
+    if (board?.data) {
       try {
         // Load snapshot if data exists
         const snapshot = board.data as Record<string, TLRecord>;
-        if (snapshot && Object.keys(snapshot).length > 0) {
-          store.put(Object.values(snapshot) as TLRecord[]);
-          console.log("[Board] Loaded content from database");
+        if (snapshot && typeof snapshot === 'object' && Object.keys(snapshot).length > 0) {
+          // Filter out any invalid or outdated records
+          const validRecords = Object.values(snapshot).filter((record): record is TLRecord => {
+            return record && typeof record === 'object' && 'id' in record && 'typeName' in record;
+          });
+          
+          if (validRecords.length > 0) {
+            store.put(validRecords);
+            console.log("[Board] Loaded content from database:", validRecords.length, "records");
+          }
         }
       } catch (error) {
         console.error("[Board] Failed to load snapshot:", error);
+        // Don't throw - let tldraw create a fresh canvas
       }
     }
-  }, [board?.id, store]); // Only reload when board ID changes
+    
+    hasLoadedRef.current = true;
+  }, [board?.id, board?.data, store]);
+
+  // Reset loaded flag when board ID changes
+  useEffect(() => {
+    hasLoadedRef.current = false;
+  }, [id]);
 
   // Auto-save on content changes (debounced)
   const handleSave = useCallback(async () => {
@@ -365,35 +384,25 @@ export function Board() {
       </header>
 
       {/* Canvas Area */}
-      <main className="flex-1 relative bg-white">
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage:
-              pageFormat === "ruled"
-                ? `linear-gradient(transparent 0px, transparent 31px, #e5e7eb 31px, #e5e7eb 32px),
-                               linear-gradient(90deg, #fca5a5 0px, #fca5a5 1px, transparent 1px)`
-                : "none",
-            backgroundSize: "100% 32px, 100% 32px",
-            backgroundPosition: "0 0, 60px 0",
-            backgroundColor: "#ffffff",
-          }}
-        >
-          {/* Tldraw canvas with transparent background */}
-          <div className="absolute inset-0 tldraw-container">
-            <Tldraw store={store} />
-          </div>
+      <main className="flex-1 relative bg-white overflow-hidden">
+        {/* Page lines background (optional) */}
+        {pageFormat === "ruled" && (
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              backgroundImage: `linear-gradient(transparent 0px, transparent 31px, #e5e7eb 31px, #e5e7eb 32px),
+                             linear-gradient(90deg, #fca5a5 0px, #fca5a5 1px, transparent 1px)`,
+              backgroundSize: "100% 32px, 100% 32px",
+              backgroundPosition: "0 0, 60px 0",
+              zIndex: 1,
+            }}
+          />
+        )}
+        
+        {/* Tldraw canvas - must fill the container properly */}
+        <div className="absolute inset-0" style={{ height: '100%', width: '100%' }}>
+          <Tldraw store={store} />
         </div>
-
-        {/* Custom CSS to make tldraw background transparent */}
-        <style>{`
-                    .tldraw-container .tl-background {
-                        background: transparent !important;
-                    }
-                    .tldraw-container .tl-canvas {
-                        background: transparent !important;
-                    }
-                `}</style>
       </main>
 
       {/* Export Modal */}
