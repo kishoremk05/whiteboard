@@ -13,7 +13,7 @@ import { useOnboarding } from "../lib/useOnboarding";
 export function Dashboard() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { boards, tags, filterByTag, createBoard, searchBoards } = useBoards();
+  const { boards, tags, filterByTag, createBoard } = useBoards();
   const {
     showOnboarding,
     completeOnboarding,
