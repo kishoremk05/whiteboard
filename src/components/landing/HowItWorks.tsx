@@ -25,8 +25,8 @@ const steps = [
     {
         number: '03',
         icon: Sparkles,
-        title: 'Enhance with AI',
-        description: 'Let AI organize ideas, suggest layouts, and automate tasks.',
+        title: 'Add Rich Content',
+        description: 'Enhance your boards with images, shapes, diagrams, and sticky notes.',
         color: 'bg-purple-500',
         lightColor: 'bg-purple-100',
     },

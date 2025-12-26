@@ -27,11 +27,15 @@ import { getInitials, cn } from "../../lib/utils";
 interface DashboardHeaderProps {
   onMenuClick: () => void;
   onSearchClick: () => void;
+  searchQuery?: string;
+  onSearchChange?: (query: string) => void;
 }
 
 export function DashboardHeader({
   onMenuClick,
   onSearchClick,
+  searchQuery = "",
+  onSearchChange,
 }: DashboardHeaderProps) {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -53,22 +57,62 @@ export function DashboardHeader({
             <Menu className="w-5 h-5 text-slate-600" />
           </button>
 
-          {/* Search Button */}
-          <button
-            onClick={onSearchClick}
-            className="hidden sm:flex items-center gap-3 px-4 py-2.5 rounded-xl bg-slate-100/80 hover:bg-slate-200/80 transition-all text-slate-500 w-72 group"
-          >
-            <Search className="w-4 h-4 group-hover:text-slate-700 transition-colors" />
-            <span className="text-sm">Search boards...</span>
-            <div className="ml-auto flex items-center gap-1">
-              <kbd className="text-[10px] bg-white px-1.5 py-0.5 rounded-md border border-slate-200 font-mono shadow-sm">
-                <Command className="w-2.5 h-2.5 inline-block" />
-              </kbd>
-              <kbd className="text-[10px] bg-white px-1.5 py-0.5 rounded-md border border-slate-200 font-mono shadow-sm">
-                K
-              </kbd>
+          {/* Search Button/Input */}
+          {onSearchChange ? (
+            <div className="hidden sm:flex items-center gap-3 px-4 py-2.5 rounded-xl bg-slate-100/80 hover:bg-slate-200/80 transition-all text-slate-500 w-72 group focus-within:ring-2 focus-within:ring-slate-300">
+              <Search className="w-4 h-4 group-focus-within:text-slate-700 transition-colors flex-shrink-0" />
+              <input
+                type="text"
+                placeholder="Search boards..."
+                value={searchQuery}
+                onChange={(e) => onSearchChange(e.target.value)}
+                className="flex-1 bg-transparent text-sm outline-none text-slate-900 placeholder:text-slate-500"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => onSearchChange("")}
+                  className="text-slate-400 hover:text-slate-600 transition-colors"
+                  title="Clear search"
+                >
+                  <span className="text-sm">×</span>
+                </button>
+              )}
+              <div className="ml-auto flex items-center gap-1 flex-shrink-0">
+                <kbd
+                  className="text-[10px] bg-white px-1.5 py-0.5 rounded-md border border-slate-200 font-mono shadow-sm"
+                  onClick={onSearchClick}
+                  role="button"
+                  title="Open command palette"
+                >
+                  <Command className="w-2.5 h-2.5 inline-block" />
+                </kbd>
+                <kbd
+                  className="text-[10px] bg-white px-1.5 py-0.5 rounded-md border border-slate-200 font-mono shadow-sm"
+                  onClick={onSearchClick}
+                  role="button"
+                  title="Open command palette"
+                >
+                  K
+                </kbd>
+              </div>
             </div>
-          </button>
+          ) : (
+            <button
+              onClick={onSearchClick}
+              className="hidden sm:flex items-center gap-3 px-4 py-2.5 rounded-xl bg-slate-100/80 hover:bg-slate-200/80 transition-all text-slate-500 w-72 group"
+            >
+              <Search className="w-4 h-4 group-hover:text-slate-700 transition-colors" />
+              <span className="text-sm">Search boards...</span>
+              <div className="ml-auto flex items-center gap-1">
+                <kbd className="text-[10px] bg-white px-1.5 py-0.5 rounded-md border border-slate-200 font-mono shadow-sm">
+                  <Command className="w-2.5 h-2.5 inline-block" />
+                </kbd>
+                <kbd className="text-[10px] bg-white px-1.5 py-0.5 rounded-md border border-slate-200 font-mono shadow-sm">
+                  K
+                </kbd>
+              </div>
+            </button>
+          )}
           <button
             onClick={onSearchClick}
             className="sm:hidden p-2 rounded-xl hover:bg-slate-100 transition-all active:scale-95"

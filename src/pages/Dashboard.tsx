@@ -13,19 +13,33 @@ import { useOnboarding } from "../lib/useOnboarding";
 export function Dashboard() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { boards, tags, filterByTag, createBoard } = useBoards();
+  const { boards, tags, filterByTag, createBoard, searchBoards } = useBoards();
   const {
     showOnboarding,
     completeOnboarding,
     isLoading: onboardingLoading,
   } = useOnboarding();
   const [templateGalleryOpen, setTemplateGalleryOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const dashboardRef = useRef<HTMLDivElement>(null);
 
   const tagId = searchParams.get("tag");
-  const filteredBoards = tagId
+
+  // Apply tag filter first
+  let filteredBoards = tagId
     ? filterByTag(tagId)
     : boards.filter((b) => !b.isDeleted);
+
+  // Then apply search filter if there's a search query
+  if (searchQuery.trim()) {
+    const lowerQuery = searchQuery.toLowerCase();
+    filteredBoards = filteredBoards.filter(
+      (board) =>
+        board.title.toLowerCase().includes(lowerQuery) ||
+        board.description?.toLowerCase().includes(lowerQuery)
+    );
+  }
+
   const currentTag = tagId ? tags.find((t: any) => t.id === tagId) : null;
 
   const handleNewBoard = async () => {
@@ -74,7 +88,7 @@ export function Dashboard() {
   }
 
   return (
-    <DashboardLayout>
+    <DashboardLayout searchQuery={searchQuery} onSearchChange={setSearchQuery}>
       <div ref={dashboardRef} className="relative min-h-[calc(100vh-120px)]">
         {/* Dot pattern background */}
         <div
