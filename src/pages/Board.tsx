@@ -237,19 +237,22 @@ export function Board() {
             return shape;
           });
           
-          // Use the external store (same as template library button)
-          store.put(shapesWithCorrectParent);
-          console.log("[Board] Loaded shapes via onMount:", shapesWithCorrectParent.length);
-          
-          // Zoom to fit the content so it's visible
+          // CRITICAL: Defer to next tick to fix production timing issue
+          // React production mode handles mount differently than dev mode
           setTimeout(() => {
-            try {
-              editor.zoomToFit({ animation: { duration: 200 } });
-              console.log("[Board] Zoomed to fit content");
-            } catch (e) {
-              console.log("[Board] Could not zoom to fit:", e);
-            }
-          }, 100);
+            store.put(shapesWithCorrectParent);
+            console.log("[Board] Loaded shapes via onMount (deferred):", shapesWithCorrectParent.length);
+            
+            // Zoom to fit the content so it's visible
+            setTimeout(() => {
+              try {
+                editor.zoomToFit({ animation: { duration: 200 } });
+                console.log("[Board] Zoomed to fit content");
+              } catch (e) {
+                console.log("[Board] Could not zoom to fit:", e);
+              }
+            }, 100);
+          }, 0);
         }
       }
     } catch (error) {
