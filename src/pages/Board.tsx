@@ -66,6 +66,7 @@ export function Board() {
   );
   const saveTimeoutRef = useRef<number | undefined>(undefined);
   const loadedDataRef = useRef<string | null>(null); // Track what data we've loaded (by JSON hash)
+  const hasLoadedOnceRef = useRef(false); // Track if we've done initial load
 
   const board = boards.find((b) => b.id === id);
 
@@ -161,15 +162,22 @@ export function Board() {
     loadBoardData();
   }, [id]);
 
-  // Load initial content from database - ONLY on initial load when store is empty
+  // Load initial content from database - ONLY ONCE per board
   useEffect(() => {
     if (!board?.id || !store) return;
     
-    // CRITICAL: If store already has shapes, don't reload from database
-    // This prevents the real-time subscription refresh from clearing user content
+    // CRITICAL: Only load data ONCE per board - never reload after initial load
+    // This prevents any subscription/refresh cycles from clearing content in production
+    if (hasLoadedOnceRef.current) {
+      console.log("[Board] Already loaded once for this board, skipping reload");
+      return;
+    }
+    
+    // Also skip if store already has shapes (from template or manual drawing)
     const existingShapes = store.allRecords().filter(r => r.typeName === 'shape');
     if (existingShapes.length > 0) {
       console.log("[Board] Store already has", existingShapes.length, "shapes, skipping reload");
+      hasLoadedOnceRef.current = true;
       return;
     }
     
@@ -262,6 +270,7 @@ export function Board() {
             
             store.put(shapesWithCorrectParent);
             console.log("[Board] Loaded shapes from database:", shapesWithCorrectParent.length, "shapes");
+            hasLoadedOnceRef.current = true;
           } else {
             console.log("[Board] No shape records to load. Record types found:", 
               [...new Set(allValues.map((r: any) => r?.typeName))].join(', '));
@@ -276,9 +285,10 @@ export function Board() {
     loadedDataRef.current = dataHash;
   }, [board?.id, board?.data, boardData, store]);
 
-  // Reset loaded flag when board ID changes
+  // Reset loaded flags when board ID changes
   useEffect(() => {
     loadedDataRef.current = null;
+    hasLoadedOnceRef.current = false;
   }, [id]);
 
   // Auto-save on content changes (debounced)
