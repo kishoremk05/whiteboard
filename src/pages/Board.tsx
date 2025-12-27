@@ -21,6 +21,7 @@ import {
 import "@tldraw/tldraw/tldraw.css";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
+import { TldrawErrorBoundary } from "../components/TldrawErrorBoundary";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -846,10 +847,12 @@ export function Board() {
           className="absolute inset-0"
           style={{ height: "100%", width: "100%" }}
         >
-          <Tldraw 
-            store={store} 
-            onMount={handleEditorMount}
-          />
+          <TldrawErrorBoundary>
+            <Tldraw 
+              store={store} 
+              onMount={handleEditorMount}
+            />
+          </TldrawErrorBoundary>
         </div>
       </main>
 
