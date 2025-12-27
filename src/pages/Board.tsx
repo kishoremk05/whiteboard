@@ -16,6 +16,7 @@ import {
   defaultShapeUtils,
   createShapeId,
   type TLRecord,
+  type Editor,
 } from "@tldraw/tldraw";
 import "@tldraw/tldraw/tldraw.css";
 import { Button } from "../components/ui/button";
@@ -67,6 +68,7 @@ export function Board() {
   const saveTimeoutRef = useRef<number | undefined>(undefined);
   const loadedDataRef = useRef<string | null>(null); // Track what data we've loaded (by JSON hash)
   const hasLoadedOnceRef = useRef(false); // Track if we've done initial load
+  const editorRef = useRef<Editor | null>(null); // Store tldraw Editor instance
 
   const board = boards.find((b) => b.id === id);
 
@@ -162,128 +164,91 @@ export function Board() {
     loadBoardData();
   }, [id]);
 
-  // Load initial content from database - ONLY ONCE per board
-  useEffect(() => {
-    if (!board?.id || !store) return;
+  // Handle tldraw editor mount - load data AFTER tldraw is fully initialized
+  const handleEditorMount = useCallback((editor: Editor) => {
+    console.log("[Board] tldraw editor mounted");
+    editorRef.current = editor;
     
-    // CRITICAL: Only load data ONCE per board - never reload after initial load
-    // This prevents any subscription/refresh cycles from clearing content in production
+    // Don't load if already loaded for this board
     if (hasLoadedOnceRef.current) {
-      console.log("[Board] Already loaded once for this board, skipping reload");
-      return;
-    }
-    
-    // Also skip if store already has shapes (from template or manual drawing)
-    const existingShapes = store.allRecords().filter(r => r.typeName === 'shape');
-    if (existingShapes.length > 0) {
-      console.log("[Board] Store already has", existingShapes.length, "shapes, skipping reload");
-      hasLoadedOnceRef.current = true;
+      console.log("[Board] Already loaded once for this board, skipping onMount load");
       return;
     }
     
     // Use directly fetched boardData if available, otherwise fall back to context board.data
-    const dataToUse = boardData || board.data;
+    const dataToUse = boardData || board?.data;
     
-    // Only load if we haven't loaded this data before
-    const dataHash = dataToUse ? JSON.stringify(dataToUse).slice(0, 100) : 'empty';
-    if (loadedDataRef.current === dataHash) {
+    if (!dataToUse) {
+      console.log("[Board] No data to load on mount");
+      hasLoadedOnceRef.current = true; // Mark as loaded even if empty
       return;
     }
     
-    if (dataToUse) {
-      try {
-        console.log("[Board] Raw data from source:", dataToUse);
-        console.log("[Board] Data type:", typeof dataToUse);
-        console.log("[Board] Data keys:", Object.keys(dataToUse as object));
-        console.log("[Board] Using directly fetched data:", !!boardData);
-        
-        // Handle different data structures
-        let dataToLoad = dataToUse as Record<string, unknown>;
-        
-        // Check if data is wrapped in a 'store' property (tldraw snapshot format)
-        if ('store' in dataToLoad && typeof dataToLoad.store === 'object') {
-          dataToLoad = dataToLoad.store as Record<string, unknown>;
-          console.log("[Board] Found nested 'store' property, extracting...");
+    try {
+      console.log("[Board] Loading data in onMount callback");
+      console.log("[Board] Data type:", typeof dataToUse);
+      console.log("[Board] Data keys:", Object.keys(dataToUse as object));
+      
+      // Handle different data structures
+      let dataToLoad = dataToUse as Record<string, unknown>;
+      
+      // Check if data is wrapped in a 'store' property (tldraw snapshot format)
+      if ('store' in dataToLoad && typeof dataToLoad.store === 'object') {
+        dataToLoad = dataToLoad.store as Record<string, unknown>;
+      }
+      
+      // Check if it has a document property (another tldraw format)
+      if ('document' in dataToLoad && typeof dataToLoad.document === 'object') {
+        const doc = dataToLoad.document as Record<string, unknown>;
+        if ('store' in doc) {
+          dataToLoad = doc.store as Record<string, unknown>;
         }
+      }
+      
+      const snapshot = dataToLoad as Record<string, TLRecord>;
+      if (snapshot && typeof snapshot === 'object' && Object.keys(snapshot).length > 0) {
+        const allValues = Object.values(snapshot);
+        console.log("[Board] Total values in snapshot:", allValues.length);
+        console.log("[Board] Record types:", [...new Set(allValues.map((r: any) => r?.typeName))].join(', '));
         
-        // Check if it has a document property (another tldraw format)
-        if ('document' in dataToLoad && typeof dataToLoad.document === 'object') {
-          const doc = dataToLoad.document as Record<string, unknown>;
-          if ('store' in doc) {
-            dataToLoad = doc.store as Record<string, unknown>;
-            console.log("[Board] Found nested 'document.store' property, extracting...");
-          }
-        }
+        // Only filter for SHAPE records
+        const shapeRecords = allValues.filter((record): record is TLRecord => {
+          return record && 
+                 typeof record === 'object' && 
+                 'id' in record && 
+                 'typeName' in record &&
+                 (record as any).typeName === 'shape';
+        });
         
-        // Load snapshot if data exists
-        const snapshot = dataToLoad as Record<string, TLRecord>;
-        if (snapshot && typeof snapshot === 'object' && Object.keys(snapshot).length > 0) {
-          // Get all values and filter for valid TLRecords
-          const allValues = Object.values(snapshot);
-          console.log("[Board] Total values in snapshot:", allValues.length);
+        console.log("[Board] Shape records found:", shapeRecords.length);
+        
+        if (shapeRecords.length > 0) {
+          // Get the current page from the editor's store
+          const editorStore = editor.store;
+          const pages = editorStore.allRecords().filter(r => r.typeName === 'page');
+          const currentPageId = pages.length > 0 ? pages[0].id : 'page:page';
+          console.log("[Board] Current page ID:", currentPageId);
           
-          // Log first few items to understand structure
-          if (allValues.length > 0) {
-            console.log("[Board] Sample value:", JSON.stringify(allValues[0]).slice(0, 200));
-            console.log("[Board] Record types in snapshot:", [...new Set(allValues.map((r: any) => r?.typeName))].join(', '));
-          }
-          
-          // CRITICAL: Only filter for SHAPE records
-          // tldraw internal records (page, camera, pointer, instance_page_state, etc.) 
-          // should NOT be loaded as they conflict with tldraw's own state management
-          const shapeRecords = allValues.filter((record): record is TLRecord => {
-            const isShape = record && 
-                           typeof record === 'object' && 
-                           'id' in record && 
-                           'typeName' in record &&
-                           (record as any).typeName === 'shape';
-            return isShape;
+          // Update shapes to use correct parentId
+          const shapesWithCorrectParent = shapeRecords.map(shape => {
+            const shapeRecord = shape as any;
+            if (shapeRecord.parentId && shapeRecord.parentId !== currentPageId) {
+              return { ...shapeRecord, parentId: currentPageId };
+            }
+            return shape;
           });
           
-          console.log("[Board] Shape records found:", shapeRecords.length);
-          
-          if (shapeRecords.length > 0) {
-            // Get the current page from tldraw's store
-            const pages = store.allRecords().filter(r => r.typeName === 'page');
-            const currentPageId = pages.length > 0 ? pages[0].id : 'page:page';
-            console.log("[Board] Current tldraw page ID:", currentPageId);
-            
-            // Update shapes to use the correct current page parentId
-            const shapesWithCorrectParent = shapeRecords.map(shape => {
-              const shapeRecord = shape as any;
-              // If the shape's parentId doesn't match current page, update it
-              if (shapeRecord.parentId && shapeRecord.parentId !== currentPageId) {
-                console.log("[Board] Updating shape parentId from", shapeRecord.parentId, "to", currentPageId);
-                return {
-                  ...shapeRecord,
-                  parentId: currentPageId
-                };
-              }
-              return shape;
-            });
-            
-            // Clear existing shapes first to avoid duplicates
-            const existingShapes = store.allRecords().filter(r => r.typeName === 'shape');
-            if (existingShapes.length > 0) {
-              store.remove(existingShapes.map(r => r.id));
-            }
-            
-            store.put(shapesWithCorrectParent);
-            console.log("[Board] Loaded shapes from database:", shapesWithCorrectParent.length, "shapes");
-            hasLoadedOnceRef.current = true;
-          } else {
-            console.log("[Board] No shape records to load. Record types found:", 
-              [...new Set(allValues.map((r: any) => r?.typeName))].join(', '));
-          }
+          // Put shapes into the editor's store
+          editorStore.put(shapesWithCorrectParent);
+          console.log("[Board] Loaded shapes via onMount:", shapesWithCorrectParent.length);
         }
-      } catch (error) {
-        console.error("[Board] Failed to load snapshot:", error);
-        // Don't throw - let tldraw create a fresh canvas
       }
+    } catch (error) {
+      console.error("[Board] Failed to load data in onMount:", error);
     }
     
-    loadedDataRef.current = dataHash;
-  }, [board?.id, board?.data, boardData, store]);
+    hasLoadedOnceRef.current = true;
+  }, [boardData, board?.data]);
 
   // Reset loaded flags when board ID changes
   useEffect(() => {
@@ -763,7 +728,7 @@ export function Board() {
         
         {/* Tldraw canvas - must fill the container properly */}
         <div className="absolute inset-0" style={{ height: '100%', width: '100%' }}>
-          <Tldraw store={store} />
+          <Tldraw store={store} onMount={handleEditorMount} />
         </div>
       </main>
 
