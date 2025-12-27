@@ -392,10 +392,8 @@ export function Board() {
       const snapshot: Record<string, any> = {};
       allShapes.forEach((shape) => {
         snapshot[shape.id] = {
-          id: shape.id,
-          type: shape.type,
-          typeName: 'shape',
           ...shape,
+          typeName: 'shape', // Ensure typeName is set for loading
         };
       });
 
@@ -422,6 +420,8 @@ export function Board() {
       isSavingRef.current = false;
       setIsSaving(false);
     }
+  }, [store, updateBoard]);
+
   // AUTO-SAVE DISABLED - Only manual save via button
   // Listen to store changes for logging purposes only (debugging)
   useEffect(() => {
