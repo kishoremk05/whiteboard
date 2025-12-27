@@ -219,7 +219,9 @@ export function Board() {
 
       // Don't load if already loaded for this board
       if (hasLoadedOnceRef.current) {
-        console.log("[Board] Already loaded once for this board, skipping onMount load");
+        console.log(
+          "[Board] Already loaded once for this board, skipping onMount load"
+        );
         return;
       }
 
@@ -241,15 +243,16 @@ export function Board() {
       const loadShapesCorrectly = () => {
         try {
           console.log("[Board] Starting proper shape loading...");
-          
+
           // Get the actual current page from tldraw
           const currentPageId = editor.getCurrentPageId();
           console.log("[Board] Real current page ID:", currentPageId);
 
           // Extract shapes from data
           const shapeData = dataToUse as Record<string, any>;
-          const shapes = Object.values(shapeData).filter((item: any) => 
-            item && typeof item === 'object' && item.typeName === 'shape'
+          const shapes = Object.values(shapeData).filter(
+            (item: any) =>
+              item && typeof item === "object" && item.typeName === "shape"
           );
 
           console.log("[Board] Found", shapes.length, "shapes to load");
@@ -265,7 +268,10 @@ export function Board() {
             parentId: currentPageId, // Use actual page ID, not hardcoded
           }));
 
-          console.log("[Board] Loading shapes with correct parentId:", currentPageId);
+          console.log(
+            "[Board] Loading shapes with correct parentId:",
+            currentPageId
+          );
 
           // Set loading flag
           isLoadingInitialDataRef.current = true;
@@ -273,8 +279,12 @@ export function Board() {
           // Store for debugging/watchdog
           loadedShapesRef.current = correctedShapes;
 
-          // Clear store and load shapes
-          editor.store.clear();
+          // FIXED: Only clear shapes, NOT the entire store (which breaks pages)
+          const existingShapes = editor.getCurrentPageShapes();
+          if (existingShapes.length > 0) {
+            editor.deleteShapes(existingShapes.map(s => s.id));
+            console.log("[Board] Cleared", existingShapes.length, "existing shapes");
+          }
           
           // Add shapes using editor's proper method
           editor.createShapes(correctedShapes.map(shape => {
@@ -297,12 +307,11 @@ export function Board() {
             } catch (e) {
               console.log("[Board] Could not zoom to fit:", e);
             }
-            
+
             // Clear loading flag
             isLoadingInitialDataRef.current = false;
             console.log("[Board] Loading complete");
           }, 200);
-
         } catch (error) {
           console.error("[Board] CRITICAL ERROR in shape loading:", error);
           isLoadingInitialDataRef.current = false;
@@ -393,7 +402,7 @@ export function Board() {
       allShapes.forEach((shape) => {
         snapshot[shape.id] = {
           ...shape,
-          typeName: 'shape', // Ensure typeName is set for loading
+          typeName: "shape", // Ensure typeName is set for loading
         };
       });
 
@@ -429,7 +438,9 @@ export function Board() {
 
     const unsubscribe = store.listen(() => {
       // Just log changes, don't auto-save
-      const shapeCount = store.allRecords().filter(r => r.typeName === 'shape').length;
+      const shapeCount = store
+        .allRecords()
+        .filter((r) => r.typeName === "shape").length;
       console.log("[Board] Store changed - current shape count:", shapeCount);
     });
 
