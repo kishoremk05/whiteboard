@@ -14,6 +14,7 @@ import {
   Tldraw,
   createTLStore,
   defaultShapeUtils,
+  createShapeId,
   type TLRecord,
 } from "@tldraw/tldraw";
 import "@tldraw/tldraw/tldraw.css";
@@ -28,6 +29,7 @@ import {
 } from "../components/ui/dropdown-menu";
 import { ExportModal } from "../components/dashboard/ExportModal";
 import { TeamCollaborateModal } from "../components/board/TeamCollaborateModal";
+import { TemplateLibraryButton } from "../components/board/TemplateLibraryButton";
 import { Avatar, AvatarFallback } from "../components/ui/avatar";
 import { useBoards } from "../contexts/BoardContext";
 import {
@@ -49,6 +51,7 @@ export function Board() {
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [pageFormat, setPageFormat] = useState<"blank" | "ruled">("blank");
+  const [templateId, setTemplateId] = useState<string | undefined>(undefined);
   const [collaborators, setCollaborators] = useState<CollaboratorWithUser[]>(
     []
   );
@@ -77,6 +80,57 @@ export function Board() {
   useEffect(() => {
     if (board) {
       setTitle(board.title);
+      
+      // Get template ID - either from metadata or infer from title
+      let detectedTemplateId: string | undefined = board.template;
+      
+      // If template ID is a database UUID (not our internal template-* format), 
+      // use title-based inference instead
+      const isInternalTemplateId = detectedTemplateId?.startsWith('template-');
+      
+      if (!isInternalTemplateId && board.title) {
+        const titleLower = board.title.toLowerCase();
+        // Math-related templates
+        if (titleLower.includes('calculus') || titleLower.includes('derivative')) {
+          detectedTemplateId = 'template-calculus';
+        } else if (titleLower.includes('quadratic')) {
+          detectedTemplateId = 'template-quadratic';
+        } else if (titleLower.includes('math problem')) {
+          detectedTemplateId = 'template-math';
+        } else if (titleLower.includes('math') || titleLower.includes('equation')) {
+          detectedTemplateId = 'template-math';
+        // Mind mapping & brainstorming
+        } else if (titleLower.includes('mind map')) {
+          detectedTemplateId = 'template-mindmap';
+        } else if (titleLower.includes('brainstorm')) {
+          detectedTemplateId = 'template-brainstorm';
+        // Project management
+        } else if (titleLower.includes('kanban')) {
+          detectedTemplateId = 'template-kanban';
+        } else if (titleLower.includes('flowchart') || titleLower.includes('flow chart')) {
+          detectedTemplateId = 'template-flowchart';
+        // Education
+        } else if (titleLower.includes('teaching') || titleLower.includes('lecture')) {
+          detectedTemplateId = 'template-teaching';
+        } else if (titleLower.includes('cornell')) {
+          detectedTemplateId = 'template-cornell';
+        // Meetings
+        } else if (titleLower.includes('meeting')) {
+          detectedTemplateId = 'template-meeting';
+        // Design
+        } else if (titleLower.includes('wireframe') || titleLower.includes('wireframing')) {
+          detectedTemplateId = 'template-wireframe';
+        // Science
+        } else if (titleLower.includes('physics') || titleLower.includes('free body')) {
+          detectedTemplateId = 'template-physics';
+        } else if (titleLower.includes('chemistry') || titleLower.includes('chemical') || titleLower.includes('molecular')) {
+          detectedTemplateId = 'template-chemistry';
+        }
+      }
+      
+      setTemplateId(detectedTemplateId);
+      console.log('[Board] Detected template:', detectedTemplateId, 'from board:', board.title);
+      
       // Fetch collaborators
       loadCollaborators();
     }
@@ -199,6 +253,179 @@ export function Board() {
     toast.success("Link copied to clipboard");
   };
 
+  // Insert template-specific components
+  const insertTemplateComponent = (componentType: string, data?: any) => {
+    if (!store) return;
+
+    console.log("Inserting component:", componentType, data);
+
+    // Simple positioning - add near center
+    const centerX = 500;
+    const centerY = 400;
+
+    const id = createShapeId();
+
+    // Create shape based on component type
+    let shape: TLRecord | null = null;
+
+    if (componentType.startsWith('symbol-') || componentType === 'formula' || componentType === 'equation-box' || componentType.startsWith('equation-')) {
+      // Text-based components
+      const textContent = data?.symbol || data?.label || '';
+      const showBorder = componentType === 'equation-box';
+      const isEquation = componentType.startsWith('equation-') && componentType !== 'equation-box';
+      
+      // Use note shape for equations (editable) vs geo for symbols
+      if (isEquation) {
+        // Geo shape for equations - transparent border, just text
+        shape = {
+          id,
+          type: 'geo',
+          typeName: 'shape',
+          x: centerX - 100,
+          y: centerY - 30,
+          rotation: 0,
+          index: 'a1' as any,
+          parentId: 'page:page' as any,
+          isLocked: false,
+          opacity: 1,
+          props: {
+            w: 200,
+            h: 60,
+            geo: 'rectangle',
+            color: 'white',
+            labelColor: 'black',
+            fill: 'none',
+            dash: 'draw',
+            size: 'l',
+            font: 'mono',
+            align: 'middle',
+            verticalAlign: 'middle',
+            growY: 0,
+            url: '',
+            scale: 1,
+            richText: {
+              type: 'doc',
+              content: [{ type: 'paragraph', content: [{ type: 'text', text: textContent }] }],
+            },
+          },
+          meta: {},
+        } as any;
+      } else {
+        // Geo shape for symbols
+        shape = {
+          id,
+          type: 'geo',
+          typeName: 'shape',
+          x: centerX - 40,
+          y: centerY - 30,
+          rotation: 0,
+          index: 'a1' as any,
+          parentId: 'page:page' as any,
+          isLocked: false,
+          opacity: 1,
+          props: {
+            w: 80,
+            h: 60,
+            geo: 'rectangle',
+            color: showBorder ? 'black' : 'white',
+            labelColor: 'black',
+            fill: 'none',
+            dash: 'draw',
+            size: 'xl',
+            font: 'mono',
+            align: 'middle',
+            verticalAlign: 'middle',
+            growY: 0,
+            url: '',
+            scale: 1,
+            richText: {
+              type: 'doc',
+              content: [{ type: 'paragraph', content: [{ type: 'text', text: textContent }] }],
+            },
+          },
+          meta: {},
+        } as any;
+      }
+    } else if (componentType.startsWith('node-') || componentType.startsWith('priority-')) {
+      // Colored nodes/boxes
+      const textContent = data?.label || '';
+      shape = {
+        id,
+        type: 'geo',
+        typeName: 'shape',
+        x: centerX - 75,
+        y: centerY - 40,
+        rotation: 0,
+        index: 'a1' as any,
+        parentId: 'page:page' as any,
+        isLocked: false,
+        opacity: 1,
+        props: {
+          w: 150,
+          h: 80,
+          geo: 'rectangle',
+          color: data?.color || 'black',
+          labelColor: 'black',
+          fill: 'solid',
+          dash: 'draw',
+          size: 'm',
+          font: 'draw',
+          align: 'middle',
+          verticalAlign: 'middle',
+          growY: 0,
+          url: '',
+          scale: 1,
+          richText: {
+            type: 'doc',
+            content: [{ type: 'paragraph', content: [{ type: 'text', text: textContent }] }],
+          },
+        },
+        meta: {},
+      } as any;
+    } else {
+      // Default: rectangle box
+      const textContent = data?.label || '';
+      shape = {
+        id,
+        type: 'geo',
+        typeName: 'shape',
+        x: centerX - 100,
+        y: centerY - 60,
+        rotation: 0,
+        index: 'a1' as any,
+        parentId: 'page:page' as any,
+        isLocked: false,
+        opacity: 1,
+        props: {
+          w: 200,
+          h: 120,
+          geo: 'rectangle',
+          color: 'black',
+          labelColor: 'black',
+          fill: 'semi',
+          dash: 'draw',
+          size: 'm',
+          font: 'draw',
+          align: 'middle',
+          verticalAlign: 'middle',
+          growY: 0,
+          url: '',
+          scale: 1,
+          richText: {
+            type: 'doc',
+            content: [{ type: 'paragraph', content: [{ type: 'text', text: textContent }] }],
+          },
+        },
+        meta: {},
+      } as any;
+    }
+
+    if (shape) {
+      store.put([shape]);
+      toast.success(`Added ${data?.label || 'component'}`);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-100">
       {/* Board Header */}
@@ -270,6 +497,7 @@ export function Board() {
         </div>
 
         <div className="flex items-center gap-2">
+
           {/* Page Format Selector */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -385,6 +613,16 @@ export function Board() {
 
       {/* Canvas Area */}
       <main className="flex-1 relative bg-white overflow-hidden">
+        {/* Template Library Floating Button - below Page 1 tab */}
+        {templateId && templateId !== 'template-blank' && (
+          <div className="absolute top-12 left-4 z-20">
+            <TemplateLibraryButton
+              templateId={templateId}
+              onInsertComponent={insertTemplateComponent}
+            />
+          </div>
+        )}
+
         {/* Page lines background (optional) */}
         {pageFormat === "ruled" && (
           <div

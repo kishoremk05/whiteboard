@@ -131,6 +131,7 @@ function transformWhiteboard(wb: DbWhiteboard, isShared = false): Board {
   // Read favorite status from metadata
   const metadata = wb.metadata as Record<string, unknown> | null;
   const isFavorite = metadata?.is_favorite === true;
+  const template = metadata?.template as string | undefined;
 
   // Note: Tags will be populated separately after tags are loaded
   // The tag_ids are stored in metadata.tag_ids
@@ -149,6 +150,7 @@ function transformWhiteboard(wb: DbWhiteboard, isShared = false): Board {
     deletedAt: wb.deleted_at || undefined,
     tags: [],
     collaborators: [],
+    template,
     data: wb.data,
     isShared,
   };
@@ -385,13 +387,16 @@ export function BoardProvider({ children }: { children: ReactNode }) {
       // Get template content if template is specified
       let boardData: Record<string, unknown> | null = null;
       if (template) {
-        const { templateContent } = await import("../data/templateContent");
-        const content = templateContent[template];
-        if (content && Object.keys(content).length > 0) {
-          boardData = content as Record<string, unknown>;
-          console.log("Loading template content for:", template);
+        const { getTemplateContent, hasTemplateContent } = await import("../lib/templateInitializer");
+        
+        // Check if template has pre-populated content
+        if (hasTemplateContent(template)) {
+          boardData = getTemplateContent(template) as Record<string, unknown>;
+          console.log("Loading template content for:", template, "with", Object.keys(boardData).length, "shapes");
         } else {
-          boardData = { template }; // Fallback to just storing template ID
+          // Fallback to empty board
+          boardData = null;
+          console.log("No template content found for:", template, "- creating blank board");
         }
       }
 
@@ -402,6 +407,7 @@ export function BoardProvider({ children }: { children: ReactNode }) {
         organization_id: currentOrganization?.id || null,
         data: boardData,
         preview: null,
+        metadata: template ? { template } as Record<string, unknown> : undefined,
       });
 
       console.log("Created whiteboard:", newWhiteboard);
