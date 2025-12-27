@@ -211,7 +211,7 @@ export function Board() {
     loadBoardData();
   }, [id]);
 
-  // Handle tldraw editor mount - load data AFTER tldraw is fully initialized
+  // Handle tldraw editor mount - COMPLETELY REWRITTEN LOADING SYSTEM
   const handleEditorMount = useCallback(
     (editor: Editor) => {
       console.log("[Board] tldraw editor mounted");
@@ -219,14 +219,11 @@ export function Board() {
 
       // Don't load if already loaded for this board
       if (hasLoadedOnceRef.current) {
-        console.log(
-          "[Board] Already loaded once for this board, skipping onMount load"
-        );
+        console.log("[Board] Already loaded once for this board, skipping onMount load");
         return;
       }
 
       // Use directly fetched boardData if available, otherwise fall back to context board.data
-      // IMPORTANT: Check that data is not empty before using it
       const dataToUse =
         boardData && Object.keys(boardData as object).length > 0
           ? boardData
@@ -236,131 +233,87 @@ export function Board() {
 
       if (!dataToUse) {
         console.log("[Board] No data to load on mount");
-        hasLoadedOnceRef.current = true; // Mark as loaded even if empty
+        hasLoadedOnceRef.current = true;
         return;
       }
 
-      try {
-        console.log("[Board] Loading data in onMount callback");
-        console.log("[Board] Data type:", typeof dataToUse);
-        console.log("[Board] Data keys:", Object.keys(dataToUse as object));
+      // CRITICAL FIX: Use proper tldraw loading with correct page ID
+      const loadShapesCorrectly = () => {
+        try {
+          console.log("[Board] Starting proper shape loading...");
+          
+          // Get the actual current page from tldraw
+          const currentPageId = editor.getCurrentPageId();
+          console.log("[Board] Real current page ID:", currentPageId);
 
-        // Handle different data structures
-        let dataToLoad = dataToUse as Record<string, unknown>;
-
-        // Check if data is wrapped in a 'store' property (tldraw snapshot format)
-        if ("store" in dataToLoad && typeof dataToLoad.store === "object") {
-          dataToLoad = dataToLoad.store as Record<string, unknown>;
-        }
-
-        // Check if it has a document property (another tldraw format)
-        if (
-          "document" in dataToLoad &&
-          typeof dataToLoad.document === "object"
-        ) {
-          const doc = dataToLoad.document as Record<string, unknown>;
-          if ("store" in doc) {
-            dataToLoad = doc.store as Record<string, unknown>;
-          }
-        }
-
-        const snapshot = dataToLoad as Record<string, TLRecord>;
-        if (
-          snapshot &&
-          typeof snapshot === "object" &&
-          Object.keys(snapshot).length > 0
-        ) {
-          const allValues = Object.values(snapshot);
-          console.log("[Board] Total values in snapshot:", allValues.length);
-          console.log(
-            "[Board] Record types:",
-            [...new Set(allValues.map((r: any) => r?.typeName))].join(", ")
+          // Extract shapes from data
+          const shapeData = dataToUse as Record<string, any>;
+          const shapes = Object.values(shapeData).filter((item: any) => 
+            item && typeof item === 'object' && item.typeName === 'shape'
           );
 
-          // Only filter for SHAPE records
-          const shapeRecords = allValues.filter(
-            (record): record is TLRecord => {
-              return (
-                record &&
-                typeof record === "object" &&
-                "id" in record &&
-                "typeName" in record &&
-                (record as any).typeName === "shape"
-              );
+          console.log("[Board] Found", shapes.length, "shapes to load");
+
+          if (shapes.length === 0) {
+            hasLoadedOnceRef.current = true;
+            return;
+          }
+
+          // CRITICAL: Fix parentId to match actual current page
+          const correctedShapes = shapes.map((shape: any) => ({
+            ...shape,
+            parentId: currentPageId, // Use actual page ID, not hardcoded
+          }));
+
+          console.log("[Board] Loading shapes with correct parentId:", currentPageId);
+
+          // Set loading flag
+          isLoadingInitialDataRef.current = true;
+
+          // Store for debugging/watchdog
+          loadedShapesRef.current = correctedShapes;
+
+          // Clear store and load shapes
+          editor.store.clear();
+          
+          // Add shapes using editor's proper method
+          editor.createShapes(correctedShapes.map(shape => {
+            // Convert to proper shape format for createShapes
+            const { id, typeName, parentId, ...props } = shape;
+            return {
+              id,
+              type: shape.type || 'geo', // fallback to geo if no type
+              ...props
+            };
+          }));
+
+          console.log("[Board] Shapes loaded via editor.createShapes()");
+
+          // Force viewport update
+          setTimeout(() => {
+            try {
+              editor.zoomToFit({ animation: { duration: 300 } });
+              console.log("[Board] Zoomed to fit content");
+            } catch (e) {
+              console.log("[Board] Could not zoom to fit:", e);
             }
-          );
+            
+            // Clear loading flag
+            isLoadingInitialDataRef.current = false;
+            console.log("[Board] Loading complete");
+          }, 200);
 
-          console.log("[Board] Shape records found:", shapeRecords.length);
-
-          if (shapeRecords.length > 0) {
-            // Get the current page from the editor
-            const currentPageId = editor.getCurrentPageId();
-            console.log("[Board] Current page ID:", currentPageId);
-
-            // Ensure all shapes have the correct parentId
-            const shapesWithCorrectParent = shapeRecords.map((shape) => {
-              const shapeRecord = shape as any;
-              return {
-                ...shapeRecord,
-                parentId: currentPageId,
-              };
-            });
-
-            // Use store.put (same as template library button)
-            // Delay to ensure tldraw is fully ready
-            setTimeout(() => {
-              console.log("[Board] Putting shapes into store...");
-
-              // Set flag to prevent auto-save during initial load
-              isLoadingInitialDataRef.current = true;
-
-              // Store shapes in ref for watchdog
-              loadedShapesRef.current = shapesWithCorrectParent;
-
-              store.put(shapesWithCorrectParent);
-              console.log(
-                "[Board] Loaded shapes into store:",
-                shapesWithCorrectParent.length
-              );
-              
-              // Verify shapes are actually in the store
-              setTimeout(() => {
-                const verifyShapes = store.allRecords().filter(r => r.typeName === 'shape');
-                console.log("[Board] VERIFY: Shapes in store after put:", verifyShapes.length);
-                if (verifyShapes.length === 0) {
-                  console.error("[Board] ERROR: Shapes disappeared immediately after put!");
-                }
-              }, 100);
-
-              // Clear flag after a delay to allow user edits to trigger auto-save
-              setTimeout(() => {
-                isLoadingInitialDataRef.current = false;
-                console.log(
-                  "[Board] Initial load complete, auto-save re-enabled"
-                );
-              }, 1000);
-
-              // Zoom to fit after a delay
-              setTimeout(() => {
-                try {
-                  editor.zoomToFit({ animation: { duration: 200 } });
-                  console.log("[Board] Zoomed to fit content");
-                } catch (e) {
-                  console.log("[Board] Could not zoom to fit:", e);
-                }
-              }, 300);
-            }, 200); // 200ms delay to ensure tldraw is ready
-          }
+        } catch (error) {
+          console.error("[Board] CRITICAL ERROR in shape loading:", error);
+          isLoadingInitialDataRef.current = false;
         }
-      } catch (error) {
-        console.error("[Board] Failed to load data in onMount:", error);
-      }
+      };
 
+      // Load after a delay to ensure tldraw is fully ready
+      setTimeout(loadShapesCorrectly, 100);
       hasLoadedOnceRef.current = true;
     },
-    // NOTE: Only depend on boardData (directly fetched) and store - NOT board?.data
-    // This prevents re-triggering when real-time subscription updates board context
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Only depend on boardData and store - NOT board?.data to prevent re-triggering
     [boardData, store]
   );
 
@@ -412,7 +365,7 @@ export function Board() {
 
   const handleSave = useCallback(async () => {
     const currentBoardId = boardIdRef.current;
-    if (!currentBoardId || !store) return;
+    if (!currentBoardId || !store || !editorRef.current) return;
 
     // Prevent concurrent saves
     if (isSavingRef.current) {
@@ -431,33 +384,32 @@ export function Board() {
       isSavingRef.current = true;
       setIsSaving(true);
 
-      // Get only SHAPE records for saving - don't save internal tldraw state
-      // (pages, cameras, pointers, etc. are managed by tldraw itself)
-      const allRecords = store.allRecords();
-      const shapeRecords = allRecords.filter((r) => r.typeName === "shape");
+      // IMPROVED: Get shapes using editor instead of direct store access
+      const allShapes = editorRef.current.getCurrentPageShapes();
+      console.log("[Board] Found", allShapes.length, "shapes to save");
 
-      const snapshot: Record<string, TLRecord> = {};
-      shapeRecords.forEach((record) => {
-        snapshot[record.id] = record;
+      // Convert shapes to saveable format
+      const snapshot: Record<string, any> = {};
+      allShapes.forEach((shape) => {
+        snapshot[shape.id] = {
+          id: shape.id,
+          type: shape.type,
+          typeName: 'shape',
+          ...shape,
+        };
       });
 
-      console.log("[Board] Saving", shapeRecords.length, "shapes to database");
+      console.log("[Board] Saving", allShapes.length, "shapes to database");
 
       await updateBoard(currentBoardId, {
         data: snapshot as Record<string, unknown>,
       });
 
-      // CRITICAL FIX: Update boardData state with saved data to keep it in sync
+      // Update boardData state with saved data to keep it in sync
       setBoardData(snapshot as Record<string, unknown>);
 
       // Update loadedShapesRef to reflect current state
-      const currentPageId = editorRef.current?.getCurrentPageId();
-      if (currentPageId) {
-        loadedShapesRef.current = shapeRecords.map((shape) => ({
-          ...shape,
-          parentId: currentPageId,
-        }));
-      }
+      loadedShapesRef.current = allShapes;
 
       lastSaveTimeRef.current = Date.now();
       setLastSaved(new Date());
@@ -470,9 +422,6 @@ export function Board() {
       isSavingRef.current = false;
       setIsSaving(false);
     }
-    // Use only updateBoard and store as dependencies - board ID is tracked via ref
-  }, [store, updateBoard]);
-
   // AUTO-SAVE DISABLED - Only manual save via button
   // Listen to store changes for logging purposes only (debugging)
   useEffect(() => {
