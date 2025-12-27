@@ -293,31 +293,23 @@ export function Board() {
             );
           }
 
-          // Add shapes using editor's proper method
-          // CRITICAL FIX: Must include parentId for shapes to render!
-          const shapesToCreate = correctedShapes.map((shape) => {
-            // Keep parentId - it's essential for rendering
-            const { id, type, parentId, x, y, rotation, isLocked, opacity, props, meta } = shape;
-            return {
-              id,
-              type: type || "geo",
-              parentId, // CRITICAL: Must include this!
-              x: x || 0,
-              y: y || 0,
-              rotation: rotation || 0,
-              isLocked: isLocked || false,
-              opacity: opacity || 1,
-              props: props || {},
-              meta: meta || {},
-            };
+          // CRITICAL: Use store.put() instead of editor.createShapes()
+          // editor.createShapes() adds shapes to store but they don't render in production!
+          // store.put() is what template library button uses and it WORKS
+          
+          // Convert shapes to proper TLRecord format (keep all fields)
+          const shapesToPut = correctedShapes.map((shape) => {
+            // Return the whole shape as-is (it's already a TLRecord)
+            return shape;
           });
           
           // DEBUG: Log first shape to see its structure
-          console.log("[Board] First shape structure:", JSON.stringify(shapesToCreate[0], null, 2));
+          console.log("[Board] First shape structure:", JSON.stringify(shapesToPut[0], null, 2));
           
-          editor.createShapes(shapesToCreate);
-
-          console.log("[Board] Shapes loaded via editor.createShapes()");
+          // Use store.put() like template library button does
+          store.put(shapesToPut);
+          
+          console.log("[Board] Shapes loaded via store.put():", shapesToPut.length);
 
           // DEFENSIVE: Mark shapes as successfully loaded
           shapesLoadedSuccessfullyRef.current = true;
