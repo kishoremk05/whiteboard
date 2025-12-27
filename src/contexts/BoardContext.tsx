@@ -337,9 +337,12 @@ export function BoardProvider({ children }: { children: ReactNode }) {
 
   /**
    * Subscribe to real-time board changes
+   * NOTE: Debounced to prevent rapid re-fetches during auto-save
    */
   useEffect(() => {
     if (!user?.id) return;
+    
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
     const channel = supabase
       .channel("boards-changes")
@@ -352,13 +355,22 @@ export function BoardProvider({ children }: { children: ReactNode }) {
           filter: `user_id=eq.${user.id}`,
         },
         () => {
-          // Refresh boards on any change
-          refreshBoards();
+          // Debounce refresh to prevent rapid-fire updates during auto-save
+          if (debounceTimer) {
+            clearTimeout(debounceTimer);
+          }
+          debounceTimer = setTimeout(() => {
+            console.log("[BoardContext] Real-time update - refreshing boards");
+            refreshBoards();
+          }, 3000); // 3 second debounce to let auto-save settle
         }
       )
       .subscribe();
 
     return () => {
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+      }
       supabase.removeChannel(channel);
     };
   }, [user?.id, refreshBoards]);

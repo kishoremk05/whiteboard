@@ -59,18 +59,28 @@ export function Board() {
   );
   const [boardData, setBoardData] = useState<unknown>(null); // Directly fetched board data
 
-  // Create tldraw store
-  const [store] = useState(() =>
-    createTLStore({
+  // Create tldraw store - MUST be stable and not recreate on re-renders
+  // Using useRef to ensure the store persists across all re-renders for this board
+  const storeRef = useRef<ReturnType<typeof createTLStore> | null>(null);
+  const storeCreatedForIdRef = useRef<string | null>(null);
+  
+  // Create store only once per board ID
+  if (!storeRef.current || storeCreatedForIdRef.current !== id) {
+    storeRef.current = createTLStore({
       shapeUtils: defaultShapeUtils,
-    })
-  );
+    });
+    storeCreatedForIdRef.current = id || null;
+    console.log('[Board] Created new store for board:', id);
+  }
+  const store = storeRef.current;
   const saveTimeoutRef = useRef<number | undefined>(undefined);
   const loadedDataRef = useRef<string | null>(null); // Track what data we've loaded (by JSON hash)
   const hasLoadedOnceRef = useRef(false); // Track if we've done initial load
   const editorRef = useRef<Editor | null>(null); // Store tldraw Editor instance
   const isLoadingInitialDataRef = useRef(false); // Prevent auto-save during initial load
   const loadedShapesRef = useRef<any[]>([]); // Store loaded shapes to restore if they disappear
+  const isSavingRef = useRef(false); // Track saving state to prevent concurrent saves
+  const lastSaveTimeRef = useRef<number>(0); // Prevent rapid-fire saves
 
   const board = boards.find((b) => b.id === id);
 
@@ -339,7 +349,10 @@ export function Board() {
 
       hasLoadedOnceRef.current = true;
     },
-    [boardData, board?.data, store]
+    // NOTE: Only depend on boardData (directly fetched) and store - NOT board?.data
+    // This prevents re-triggering when real-time subscription updates board context
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [boardData, store]
   );
 
   // Reset loaded flags when board ID changes
@@ -383,11 +396,31 @@ export function Board() {
   }, [store]);
 
   // Auto-save on content changes (debounced)
+  // Use refs for board ID to avoid recreating this function on every board context update
+  const boardIdRef = useRef<string | undefined>(board?.id);
+  boardIdRef.current = board?.id;
+  
   const handleSave = useCallback(async () => {
-    if (!board || !store) return;
+    const currentBoardId = boardIdRef.current;
+    if (!currentBoardId || !store) return;
+    
+    // Prevent concurrent saves
+    if (isSavingRef.current) {
+      console.log("[Board] Save already in progress, skipping");
+      return;
+    }
+    
+    // Prevent saves within 1 second of each other
+    const now = Date.now();
+    if (now - lastSaveTimeRef.current < 1000) {
+      console.log("[Board] Too soon since last save, skipping");
+      return;
+    }
 
     try {
+      isSavingRef.current = true;
       setIsSaving(true);
+      
       // Get only SHAPE records for saving - don't save internal tldraw state
       // (pages, cameras, pointers, etc. are managed by tldraw itself)
       const allRecords = store.allRecords();
@@ -397,8 +430,10 @@ export function Board() {
       shapeRecords.forEach((record) => {
         snapshot[record.id] = record;
       });
+      
+      console.log("[Board] Saving", shapeRecords.length, "shapes to database");
 
-      await updateBoard(board.id, {
+      await updateBoard(currentBoardId, {
         data: snapshot as Record<string, unknown>,
       });
 
@@ -414,15 +449,18 @@ export function Board() {
         }));
       }
 
+      lastSaveTimeRef.current = Date.now();
       setLastSaved(new Date());
       console.log("[Board] Content auto-saved, boardData state updated");
     } catch (error) {
       console.error("[Board] Failed to save:", error);
       toast.error("Failed to save changes");
     } finally {
+      isSavingRef.current = false;
       setIsSaving(false);
     }
-  }, [board, store, updateBoard]);
+    // Use only updateBoard and store as dependencies - board ID is tracked via ref
+  }, [store, updateBoard]);
 
   // Listen to store changes and debounce save
   useEffect(() => {
@@ -900,11 +938,12 @@ export function Board() {
         )}
 
         {/* Tldraw canvas - must fill the container properly */}
+        {/* CRITICAL: Don't use key={board.id} - it causes remounting and data loss on context updates */}
         <div
           className="absolute inset-0"
           style={{ height: "100%", width: "100%" }}
         >
-          <Tldraw key={board.id} store={store} onMount={handleEditorMount} />
+          <Tldraw store={store} onMount={handleEditorMount} />
         </div>
       </main>
 
