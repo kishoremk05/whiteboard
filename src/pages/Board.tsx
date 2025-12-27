@@ -161,17 +161,23 @@ export function Board() {
     loadBoardData();
   }, [id]);
 
-  // Load initial content from database - reload when data changes
+  // Load initial content from database - ONLY on initial load when store is empty
   useEffect(() => {
     if (!board?.id || !store) return;
+    
+    // CRITICAL: If store already has shapes, don't reload from database
+    // This prevents the real-time subscription refresh from clearing user content
+    const existingShapes = store.allRecords().filter(r => r.typeName === 'shape');
+    if (existingShapes.length > 0) {
+      console.log("[Board] Store already has", existingShapes.length, "shapes, skipping reload");
+      return;
+    }
     
     // Use directly fetched boardData if available, otherwise fall back to context board.data
     const dataToUse = boardData || board.data;
     
-    // Create a simple hash of the data to detect changes
+    // Only load if we haven't loaded this data before
     const dataHash = dataToUse ? JSON.stringify(dataToUse).slice(0, 100) : 'empty';
-    
-    // Only load if the data has changed
     if (loadedDataRef.current === dataHash) {
       return;
     }
