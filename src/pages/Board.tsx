@@ -282,20 +282,26 @@ export function Board() {
           // FIXED: Only clear shapes, NOT the entire store (which breaks pages)
           const existingShapes = editor.getCurrentPageShapes();
           if (existingShapes.length > 0) {
-            editor.deleteShapes(existingShapes.map(s => s.id));
-            console.log("[Board] Cleared", existingShapes.length, "existing shapes");
+            editor.deleteShapes(existingShapes.map((s) => s.id));
+            console.log(
+              "[Board] Cleared",
+              existingShapes.length,
+              "existing shapes"
+            );
           }
-          
+
           // Add shapes using editor's proper method
-          editor.createShapes(correctedShapes.map(shape => {
-            // Convert to proper shape format for createShapes
-            const { id, typeName, parentId, ...props } = shape;
-            return {
-              id,
-              type: shape.type || 'geo', // fallback to geo if no type
-              ...props
-            };
-          }));
+          editor.createShapes(
+            correctedShapes.map((shape) => {
+              // Convert to proper shape format for createShapes
+              const { id, typeName, parentId, ...props } = shape;
+              return {
+                id,
+                type: shape.type || "geo", // fallback to geo if no type
+                ...props,
+              };
+            })
+          );
 
           console.log("[Board] Shapes loaded via editor.createShapes()");
 
@@ -305,7 +311,6 @@ export function Board() {
 
           // REMOVED: zoomToFit was causing UI components to disappear
           // The shapes are loaded and visible, let user zoom manually if needed
-          
         } catch (error) {
           console.error("[Board] CRITICAL ERROR in shape loading:", error);
           isLoadingInitialDataRef.current = false;
@@ -894,18 +899,9 @@ export function Board() {
           className="absolute inset-0"
           style={{ height: "100%", width: "100%" }}
         >
-          <Tldraw 
-            store={store} 
+          <Tldraw
+            store={store}
             onMount={handleEditorMount}
-            components={{
-              // Ensure UI components are explicitly enabled
-              Toolbar: undefined, // Use default
-              StylePanel: undefined, // Use default  
-              PageMenu: undefined, // Use default
-              MainMenu: undefined, // Use default
-              QuickActions: undefined, // Use default
-              ActionsMenu: undefined, // Use default
-            }}
           />
         </div>
       </main>
