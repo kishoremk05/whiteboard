@@ -59,7 +59,7 @@ export function Board() {
   );
   const [boardData, setBoardData] = useState<unknown>(null); // Directly fetched board data
 
-  // Create tldraw store - stable across re-renders
+  // Create tldraw store - needed for save operations and template insertion
   const store = useMemo(() => {
     console.log("[Board] Creating new tldraw store for board:", id);
     return createTLStore({
@@ -271,17 +271,20 @@ export function Board() {
     loadedShapesRef.current = [];
   }, [id]);
 
-  // WATCHDOG RE-ENABLED - Critical for production (Vercel) where shapes disappear
+  // WATCHDOG - restores shapes if they disappear
   useEffect(() => {
-    if (!store || loadedShapesRef.current.length === 0) return;
+    if (loadedShapesRef.current.length === 0) return;
 
     const intervalId = setInterval(() => {
+      const editor = editorRef.current;
+      if (!editor) return;
+      
       // Don't run watchdog during initial load
       if (isLoadingInitialDataRef.current) return;
 
-      const currentShapes = store
+      const currentShapes = editor.store
         .allRecords()
-        .filter((r) => r.typeName === "shape");
+        .filter((r: any) => r.typeName === "shape");
 
       // If shapes disappeared but we have them in ref, restore them
       if (currentShapes.length === 0 && loadedShapesRef.current.length > 0) {
@@ -291,18 +294,18 @@ export function Board() {
           "shapes"
         );
         isLoadingInitialDataRef.current = true;
-        store.put(loadedShapesRef.current);
+        editor.store.put(loadedShapesRef.current);
         setTimeout(() => {
           isLoadingInitialDataRef.current = false;
           console.log(
-            "[Board] WATCHDOG: Shapes restored and auto-save re-enabled"
+            "[Board] WATCHDOG: Shapes restored"
           );
         }, 500);
       }
     }, 2000); // Check every 2 seconds
 
     return () => clearInterval(intervalId);
-  }, [store]);
+  }, []);
 
 
   // Manual save only - Use refs for board ID to avoid recreating this function on every board context update
@@ -839,12 +842,14 @@ export function Board() {
         )}
 
         {/* Tldraw canvas - must fill the container properly */}
-        {/* Let Tldraw manage its own store - we load data via editor.store in onMount */}
         <div
           className="absolute inset-0"
           style={{ height: "100%", width: "100%" }}
         >
-          <Tldraw onMount={handleEditorMount} />
+          <Tldraw 
+            store={store} 
+            onMount={handleEditorMount}
+          />
         </div>
       </main>
 
