@@ -277,7 +277,10 @@ export function Board() {
           // FIXED: Only clear shapes, NOT the entire store (which breaks pages)
           // DEFENSIVE: Only clear if we haven't successfully loaded shapes yet
           const existingShapes = editor.getCurrentPageShapes();
-          if (existingShapes.length > 0 && !shapesLoadedSuccessfullyRef.current) {
+          if (
+            existingShapes.length > 0 &&
+            !shapesLoadedSuccessfullyRef.current
+          ) {
             editor.deleteShapes(existingShapes.map((s) => s.id));
             console.log(
               "[Board] Cleared",
@@ -304,7 +307,7 @@ export function Board() {
           );
 
           console.log("[Board] Shapes loaded via editor.createShapes()");
-          
+
           // DEFENSIVE: Mark shapes as successfully loaded
           shapesLoadedSuccessfullyRef.current = true;
 
@@ -336,8 +339,7 @@ export function Board() {
     loadedShapesRef.current = [];
   }, [id]);
 
-  // WATCHDOG DISABLED FOR DEBUGGING - was causing potential issues
-  /*
+  // WATCHDOG RE-ENABLED - Critical for production (Vercel) where shapes disappear
   useEffect(() => {
     if (!store || loadedShapesRef.current.length === 0) return;
 
@@ -369,7 +371,7 @@ export function Board() {
 
     return () => clearInterval(intervalId);
   }, [store]);
-  */
+
 
   // Manual save only - Use refs for board ID to avoid recreating this function on every board context update
   const boardIdRef = useRef<string | undefined>(board?.id);
@@ -445,10 +447,12 @@ export function Board() {
         .allRecords()
         .filter((r) => r.typeName === "shape").length;
       console.log("[Board] Store changed - current shape count:", shapeCount);
-      
+
       // DEFENSIVE: If shapes disappear after successful loading, log warning
       if (shapeCount === 0 && shapesLoadedSuccessfullyRef.current) {
-        console.warn("[Board] WARNING: Shapes disappeared after successful loading! This should not happen.");
+        console.warn(
+          "[Board] WARNING: Shapes disappeared after successful loading! This should not happen."
+        );
       }
     });
 
@@ -903,12 +907,12 @@ export function Board() {
         )}
 
         {/* Tldraw canvas - must fill the container properly */}
-        {/* CRITICAL: Don't use key={board.id} - it causes remounting and data loss on context updates */}
+        {/* CRITICAL: key={board.id} prevents remounting on context updates - essential for Vercel */}
         <div
           className="absolute inset-0"
           style={{ height: "100%", width: "100%" }}
         >
-          <Tldraw store={store} onMount={handleEditorMount} />
+          <Tldraw key={board.id} store={store} onMount={handleEditorMount} />
         </div>
       </main>
 
