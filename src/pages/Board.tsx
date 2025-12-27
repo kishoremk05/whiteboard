@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -60,13 +60,21 @@ export function Board() {
   );
   const [boardData, setBoardData] = useState<unknown>(null); // Directly fetched board data
 
-  // Create tldraw store - needed for save operations and template insertion
-  const store = useMemo(() => {
+  // Create tldraw store ONCE using ref - never recreate!
+  // This prevents Tldraw from resetting when component re-renders
+  const storeRef = useRef<ReturnType<typeof createTLStore> | null>(null);
+  const storeBoardIdRef = useRef<string | undefined>(undefined);
+  
+  // Initialize store only once per board
+  if (!storeRef.current || storeBoardIdRef.current !== id) {
     console.log("[Board] Creating new tldraw store for board:", id);
-    return createTLStore({
+    storeRef.current = createTLStore({
       shapeUtils: defaultShapeUtils,
     });
-  }, [id]);
+    storeBoardIdRef.current = id;
+  }
+  
+  const store = storeRef.current;
 
   // Refs
   const editorRef = useRef<Editor | null>(null);
