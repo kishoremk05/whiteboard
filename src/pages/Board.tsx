@@ -295,24 +295,27 @@ export function Board() {
 
           // Add shapes using editor's proper method
           // CRITICAL FIX: Must include parentId for shapes to render!
-          editor.createShapes(
-            correctedShapes.map((shape) => {
-              // Keep parentId - it's essential for rendering
-              const { id, type, parentId, x, y, rotation, isLocked, opacity, props, meta } = shape;
-              return {
-                id,
-                type: type || "geo",
-                parentId, // CRITICAL: Must include this!
-                x: x || 0,
-                y: y || 0,
-                rotation: rotation || 0,
-                isLocked: isLocked || false,
-                opacity: opacity || 1,
-                props: props || {},
-                meta: meta || {},
-              };
-            })
-          );
+          const shapesToCreate = correctedShapes.map((shape) => {
+            // Keep parentId - it's essential for rendering
+            const { id, type, parentId, x, y, rotation, isLocked, opacity, props, meta } = shape;
+            return {
+              id,
+              type: type || "geo",
+              parentId, // CRITICAL: Must include this!
+              x: x || 0,
+              y: y || 0,
+              rotation: rotation || 0,
+              isLocked: isLocked || false,
+              opacity: opacity || 1,
+              props: props || {},
+              meta: meta || {},
+            };
+          });
+          
+          // DEBUG: Log first shape to see its structure
+          console.log("[Board] First shape structure:", JSON.stringify(shapesToCreate[0], null, 2));
+          
+          editor.createShapes(shapesToCreate);
 
           console.log("[Board] Shapes loaded via editor.createShapes()");
 
