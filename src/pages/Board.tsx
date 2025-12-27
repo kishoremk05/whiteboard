@@ -87,57 +87,84 @@ export function Board() {
   useEffect(() => {
     if (board) {
       setTitle(board.title);
-      
+
       // Get template ID - either from metadata or infer from title
       let detectedTemplateId: string | undefined = board.template;
-      
-      // If template ID is a database UUID (not our internal template-* format), 
+
+      // If template ID is a database UUID (not our internal template-* format),
       // use title-based inference instead
-      const isInternalTemplateId = detectedTemplateId?.startsWith('template-');
-      
+      const isInternalTemplateId = detectedTemplateId?.startsWith("template-");
+
       if (!isInternalTemplateId && board.title) {
         const titleLower = board.title.toLowerCase();
         // Math-related templates
-        if (titleLower.includes('calculus') || titleLower.includes('derivative')) {
-          detectedTemplateId = 'template-calculus';
-        } else if (titleLower.includes('quadratic')) {
-          detectedTemplateId = 'template-quadratic';
-        } else if (titleLower.includes('math problem')) {
-          detectedTemplateId = 'template-math';
-        } else if (titleLower.includes('math') || titleLower.includes('equation')) {
-          detectedTemplateId = 'template-math';
-        // Mind mapping & brainstorming
-        } else if (titleLower.includes('mind map')) {
-          detectedTemplateId = 'template-mindmap';
-        } else if (titleLower.includes('brainstorm')) {
-          detectedTemplateId = 'template-brainstorm';
-        // Project management
-        } else if (titleLower.includes('kanban')) {
-          detectedTemplateId = 'template-kanban';
-        } else if (titleLower.includes('flowchart') || titleLower.includes('flow chart')) {
-          detectedTemplateId = 'template-flowchart';
-        // Education
-        } else if (titleLower.includes('teaching') || titleLower.includes('lecture')) {
-          detectedTemplateId = 'template-teaching';
-        } else if (titleLower.includes('cornell')) {
-          detectedTemplateId = 'template-cornell';
-        // Meetings
-        } else if (titleLower.includes('meeting')) {
-          detectedTemplateId = 'template-meeting';
-        // Design
-        } else if (titleLower.includes('wireframe') || titleLower.includes('wireframing')) {
-          detectedTemplateId = 'template-wireframe';
-        // Science
-        } else if (titleLower.includes('physics') || titleLower.includes('free body')) {
-          detectedTemplateId = 'template-physics';
-        } else if (titleLower.includes('chemistry') || titleLower.includes('chemical') || titleLower.includes('molecular')) {
-          detectedTemplateId = 'template-chemistry';
+        if (
+          titleLower.includes("calculus") ||
+          titleLower.includes("derivative")
+        ) {
+          detectedTemplateId = "template-calculus";
+        } else if (titleLower.includes("quadratic")) {
+          detectedTemplateId = "template-quadratic";
+        } else if (titleLower.includes("math problem")) {
+          detectedTemplateId = "template-math";
+        } else if (
+          titleLower.includes("math") ||
+          titleLower.includes("equation")
+        ) {
+          detectedTemplateId = "template-math";
+          // Mind mapping & brainstorming
+        } else if (titleLower.includes("mind map")) {
+          detectedTemplateId = "template-mindmap";
+        } else if (titleLower.includes("brainstorm")) {
+          detectedTemplateId = "template-brainstorm";
+          // Project management
+        } else if (titleLower.includes("kanban")) {
+          detectedTemplateId = "template-kanban";
+        } else if (
+          titleLower.includes("flowchart") ||
+          titleLower.includes("flow chart")
+        ) {
+          detectedTemplateId = "template-flowchart";
+          // Education
+        } else if (
+          titleLower.includes("teaching") ||
+          titleLower.includes("lecture")
+        ) {
+          detectedTemplateId = "template-teaching";
+        } else if (titleLower.includes("cornell")) {
+          detectedTemplateId = "template-cornell";
+          // Meetings
+        } else if (titleLower.includes("meeting")) {
+          detectedTemplateId = "template-meeting";
+          // Design
+        } else if (
+          titleLower.includes("wireframe") ||
+          titleLower.includes("wireframing")
+        ) {
+          detectedTemplateId = "template-wireframe";
+          // Science
+        } else if (
+          titleLower.includes("physics") ||
+          titleLower.includes("free body")
+        ) {
+          detectedTemplateId = "template-physics";
+        } else if (
+          titleLower.includes("chemistry") ||
+          titleLower.includes("chemical") ||
+          titleLower.includes("molecular")
+        ) {
+          detectedTemplateId = "template-chemistry";
         }
       }
-      
+
       setTemplateId(detectedTemplateId);
-      console.log('[Board] Detected template:', detectedTemplateId, 'from board:', board.title);
-      
+      console.log(
+        "[Board] Detected template:",
+        detectedTemplateId,
+        "from board:",
+        board.title
+      );
+
       // Fetch collaborators
       loadCollaborators();
     }
@@ -147,13 +174,21 @@ export function Board() {
   useEffect(() => {
     const loadBoardData = async () => {
       if (!id) return;
-      
+
       try {
-        console.log("[Board] Directly fetching board data from database for:", id);
+        console.log(
+          "[Board] Directly fetching board data from database for:",
+          id
+        );
         const whiteboard = await fetchWhiteboard(id);
-        
+
         if (whiteboard?.data) {
-          console.log("[Board] Direct fetch got data:", typeof whiteboard.data, Object.keys(whiteboard.data as object).length, "keys");
+          console.log(
+            "[Board] Direct fetch got data:",
+            typeof whiteboard.data,
+            Object.keys(whiteboard.data as object).length,
+            "keys"
+          );
           setBoardData(whiteboard.data);
         } else {
           console.log("[Board] Direct fetch returned no data");
@@ -162,120 +197,150 @@ export function Board() {
         console.error("[Board] Error directly fetching board data:", error);
       }
     };
-    
+
     loadBoardData();
   }, [id]);
 
   // Handle tldraw editor mount - load data AFTER tldraw is fully initialized
-  const handleEditorMount = useCallback((editor: Editor) => {
-    console.log("[Board] tldraw editor mounted");
-    editorRef.current = editor;
-    
-    // Don't load if already loaded for this board
-    if (hasLoadedOnceRef.current) {
-      console.log("[Board] Already loaded once for this board, skipping onMount load");
-      return;
-    }
-    
-    // Use directly fetched boardData if available, otherwise fall back to context board.data
-    const dataToUse = boardData || board?.data;
-    
-    if (!dataToUse) {
-      console.log("[Board] No data to load on mount");
-      hasLoadedOnceRef.current = true; // Mark as loaded even if empty
-      return;
-    }
-    
-    try {
-      console.log("[Board] Loading data in onMount callback");
-      console.log("[Board] Data type:", typeof dataToUse);
-      console.log("[Board] Data keys:", Object.keys(dataToUse as object));
-      
-      // Handle different data structures
-      let dataToLoad = dataToUse as Record<string, unknown>;
-      
-      // Check if data is wrapped in a 'store' property (tldraw snapshot format)
-      if ('store' in dataToLoad && typeof dataToLoad.store === 'object') {
-        dataToLoad = dataToLoad.store as Record<string, unknown>;
+  const handleEditorMount = useCallback(
+    (editor: Editor) => {
+      console.log("[Board] tldraw editor mounted");
+      editorRef.current = editor;
+
+      // Don't load if already loaded for this board
+      if (hasLoadedOnceRef.current) {
+        console.log(
+          "[Board] Already loaded once for this board, skipping onMount load"
+        );
+        return;
       }
-      
-      // Check if it has a document property (another tldraw format)
-      if ('document' in dataToLoad && typeof dataToLoad.document === 'object') {
-        const doc = dataToLoad.document as Record<string, unknown>;
-        if ('store' in doc) {
-          dataToLoad = doc.store as Record<string, unknown>;
+
+      // Use directly fetched boardData if available, otherwise fall back to context board.data
+      // IMPORTANT: Check that data is not empty before using it
+      const dataToUse =
+        boardData && Object.keys(boardData as object).length > 0
+          ? boardData
+          : board?.data && Object.keys(board.data as object).length > 0
+          ? board.data
+          : null;
+
+      if (!dataToUse) {
+        console.log("[Board] No data to load on mount");
+        hasLoadedOnceRef.current = true; // Mark as loaded even if empty
+        return;
+      }
+
+      try {
+        console.log("[Board] Loading data in onMount callback");
+        console.log("[Board] Data type:", typeof dataToUse);
+        console.log("[Board] Data keys:", Object.keys(dataToUse as object));
+
+        // Handle different data structures
+        let dataToLoad = dataToUse as Record<string, unknown>;
+
+        // Check if data is wrapped in a 'store' property (tldraw snapshot format)
+        if ("store" in dataToLoad && typeof dataToLoad.store === "object") {
+          dataToLoad = dataToLoad.store as Record<string, unknown>;
         }
-      }
-      
-      const snapshot = dataToLoad as Record<string, TLRecord>;
-      if (snapshot && typeof snapshot === 'object' && Object.keys(snapshot).length > 0) {
-        const allValues = Object.values(snapshot);
-        console.log("[Board] Total values in snapshot:", allValues.length);
-        console.log("[Board] Record types:", [...new Set(allValues.map((r: any) => r?.typeName))].join(', '));
-        
-        // Only filter for SHAPE records
-        const shapeRecords = allValues.filter((record): record is TLRecord => {
-          return record && 
-                 typeof record === 'object' && 
-                 'id' in record && 
-                 'typeName' in record &&
-                 (record as any).typeName === 'shape';
-        });
-        
-        console.log("[Board] Shape records found:", shapeRecords.length);
-        
-        if (shapeRecords.length > 0) {
-          // Get the current page from the editor
-          const currentPageId = editor.getCurrentPageId();
-          console.log("[Board] Current page ID:", currentPageId);
-          
-          // Ensure all shapes have the correct parentId
-          const shapesWithCorrectParent = shapeRecords.map(shape => {
-            const shapeRecord = shape as any;
-            return {
-              ...shapeRecord,
-              parentId: currentPageId,
-            };
-          });
-          
-          // Use store.put (same as template library button)
-          // Delay to ensure tldraw is fully ready
-          setTimeout(() => {
-            console.log("[Board] Putting shapes into store...");
-            
-            // Set flag to prevent auto-save during initial load
-            isLoadingInitialDataRef.current = true;
-            
-            // Store shapes in ref for watchdog
-            loadedShapesRef.current = shapesWithCorrectParent;
-            
-            store.put(shapesWithCorrectParent);
-            console.log("[Board] Loaded shapes into store:", shapesWithCorrectParent.length);
-            
-            // Clear flag after a delay to allow user edits to trigger auto-save
-            setTimeout(() => {
-              isLoadingInitialDataRef.current = false;
-              console.log("[Board] Initial load complete, auto-save re-enabled");
-            }, 1000);
-            
-            // Zoom to fit after a delay
-            setTimeout(() => {
-              try {
-                editor.zoomToFit({ animation: { duration: 200 } });
-                console.log("[Board] Zoomed to fit content");
-              } catch (e) {
-                console.log("[Board] Could not zoom to fit:", e);
-              }
-            }, 300);
-          }, 200); // 200ms delay to ensure tldraw is ready
+
+        // Check if it has a document property (another tldraw format)
+        if (
+          "document" in dataToLoad &&
+          typeof dataToLoad.document === "object"
+        ) {
+          const doc = dataToLoad.document as Record<string, unknown>;
+          if ("store" in doc) {
+            dataToLoad = doc.store as Record<string, unknown>;
+          }
         }
+
+        const snapshot = dataToLoad as Record<string, TLRecord>;
+        if (
+          snapshot &&
+          typeof snapshot === "object" &&
+          Object.keys(snapshot).length > 0
+        ) {
+          const allValues = Object.values(snapshot);
+          console.log("[Board] Total values in snapshot:", allValues.length);
+          console.log(
+            "[Board] Record types:",
+            [...new Set(allValues.map((r: any) => r?.typeName))].join(", ")
+          );
+
+          // Only filter for SHAPE records
+          const shapeRecords = allValues.filter(
+            (record): record is TLRecord => {
+              return (
+                record &&
+                typeof record === "object" &&
+                "id" in record &&
+                "typeName" in record &&
+                (record as any).typeName === "shape"
+              );
+            }
+          );
+
+          console.log("[Board] Shape records found:", shapeRecords.length);
+
+          if (shapeRecords.length > 0) {
+            // Get the current page from the editor
+            const currentPageId = editor.getCurrentPageId();
+            console.log("[Board] Current page ID:", currentPageId);
+
+            // Ensure all shapes have the correct parentId
+            const shapesWithCorrectParent = shapeRecords.map((shape) => {
+              const shapeRecord = shape as any;
+              return {
+                ...shapeRecord,
+                parentId: currentPageId,
+              };
+            });
+
+            // Use store.put (same as template library button)
+            // Delay to ensure tldraw is fully ready
+            setTimeout(() => {
+              console.log("[Board] Putting shapes into store...");
+
+              // Set flag to prevent auto-save during initial load
+              isLoadingInitialDataRef.current = true;
+
+              // Store shapes in ref for watchdog
+              loadedShapesRef.current = shapesWithCorrectParent;
+
+              store.put(shapesWithCorrectParent);
+              console.log(
+                "[Board] Loaded shapes into store:",
+                shapesWithCorrectParent.length
+              );
+
+              // Clear flag after a delay to allow user edits to trigger auto-save
+              setTimeout(() => {
+                isLoadingInitialDataRef.current = false;
+                console.log(
+                  "[Board] Initial load complete, auto-save re-enabled"
+                );
+              }, 1000);
+
+              // Zoom to fit after a delay
+              setTimeout(() => {
+                try {
+                  editor.zoomToFit({ animation: { duration: 200 } });
+                  console.log("[Board] Zoomed to fit content");
+                } catch (e) {
+                  console.log("[Board] Could not zoom to fit:", e);
+                }
+              }, 300);
+            }, 200); // 200ms delay to ensure tldraw is ready
+          }
+        }
+      } catch (error) {
+        console.error("[Board] Failed to load data in onMount:", error);
       }
-    } catch (error) {
-      console.error("[Board] Failed to load data in onMount:", error);
-    }
-    
-    hasLoadedOnceRef.current = true;
-  }, [boardData, board?.data, store]);
+
+      hasLoadedOnceRef.current = true;
+    },
+    [boardData, board?.data, store]
+  );
 
   // Reset loaded flags when board ID changes
   useEffect(() => {
@@ -289,22 +354,33 @@ export function Board() {
     if (!store || loadedShapesRef.current.length === 0) return;
 
     const intervalId = setInterval(() => {
-      const currentShapes = store.allRecords().filter(r => r.typeName === 'shape');
-      
+      // Don't run watchdog during initial load
+      if (isLoadingInitialDataRef.current) return;
+
+      const currentShapes = store
+        .allRecords()
+        .filter((r) => r.typeName === "shape");
+
       // If shapes disappeared but we have them in ref, restore them
       if (currentShapes.length === 0 && loadedShapesRef.current.length > 0) {
-        console.log("[Board] WATCHDOG: Shapes disappeared! Restoring", loadedShapesRef.current.length, "shapes");
+        console.warn(
+          "[Board] WATCHDOG: Shapes disappeared! Restoring",
+          loadedShapesRef.current.length,
+          "shapes"
+        );
         isLoadingInitialDataRef.current = true;
         store.put(loadedShapesRef.current);
         setTimeout(() => {
           isLoadingInitialDataRef.current = false;
+          console.log(
+            "[Board] WATCHDOG: Shapes restored and auto-save re-enabled"
+          );
         }, 500);
       }
-    }, 1000); // Check every second
+    }, 2000); // Check every 2 seconds
 
     return () => clearInterval(intervalId);
   }, [store]);
-
 
   // Auto-save on content changes (debounced)
   const handleSave = useCallback(async () => {
@@ -315,8 +391,8 @@ export function Board() {
       // Get only SHAPE records for saving - don't save internal tldraw state
       // (pages, cameras, pointers, etc. are managed by tldraw itself)
       const allRecords = store.allRecords();
-      const shapeRecords = allRecords.filter(r => r.typeName === 'shape');
-      
+      const shapeRecords = allRecords.filter((r) => r.typeName === "shape");
+
       const snapshot: Record<string, TLRecord> = {};
       shapeRecords.forEach((record) => {
         snapshot[record.id] = record;
@@ -326,8 +402,20 @@ export function Board() {
         data: snapshot as Record<string, unknown>,
       });
 
+      // CRITICAL FIX: Update boardData state with saved data to keep it in sync
+      setBoardData(snapshot as Record<string, unknown>);
+
+      // Update loadedShapesRef to reflect current state
+      const currentPageId = editorRef.current?.getCurrentPageId();
+      if (currentPageId) {
+        loadedShapesRef.current = shapeRecords.map((shape) => ({
+          ...shape,
+          parentId: currentPageId,
+        }));
+      }
+
       setLastSaved(new Date());
-      console.log("[Board] Content auto-saved");
+      console.log("[Board] Content auto-saved, boardData state updated");
     } catch (error) {
       console.error("[Board] Failed to save:", error);
       toast.error("Failed to save changes");
@@ -346,7 +434,7 @@ export function Board() {
         console.log("[Board] Skipping auto-save during initial load");
         return;
       }
-      
+
       // Clear existing timeout
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
@@ -413,44 +501,56 @@ export function Board() {
     // Create shape based on component type
     let shape: TLRecord | null = null;
 
-    if (componentType.startsWith('symbol-') || componentType === 'formula' || componentType === 'equation-box' || componentType.startsWith('equation-')) {
+    if (
+      componentType.startsWith("symbol-") ||
+      componentType === "formula" ||
+      componentType === "equation-box" ||
+      componentType.startsWith("equation-")
+    ) {
       // Text-based components
-      const textContent = data?.symbol || data?.label || '';
-      const showBorder = componentType === 'equation-box';
-      const isEquation = componentType.startsWith('equation-') && componentType !== 'equation-box';
-      
+      const textContent = data?.symbol || data?.label || "";
+      const showBorder = componentType === "equation-box";
+      const isEquation =
+        componentType.startsWith("equation-") &&
+        componentType !== "equation-box";
+
       // Use note shape for equations (editable) vs geo for symbols
       if (isEquation) {
         // Geo shape for equations - transparent border, just text
         shape = {
           id,
-          type: 'geo',
-          typeName: 'shape',
+          type: "geo",
+          typeName: "shape",
           x: centerX - 100,
           y: centerY - 30,
           rotation: 0,
-          index: 'a1' as any,
-          parentId: 'page:page' as any,
+          index: "a1" as any,
+          parentId: "page:page" as any,
           isLocked: false,
           opacity: 1,
           props: {
             w: 200,
             h: 60,
-            geo: 'rectangle',
-            color: 'white',
-            labelColor: 'black',
-            fill: 'none',
-            dash: 'draw',
-            size: 'l',
-            font: 'mono',
-            align: 'middle',
-            verticalAlign: 'middle',
+            geo: "rectangle",
+            color: "white",
+            labelColor: "black",
+            fill: "none",
+            dash: "draw",
+            size: "l",
+            font: "mono",
+            align: "middle",
+            verticalAlign: "middle",
             growY: 0,
-            url: '',
+            url: "",
             scale: 1,
             richText: {
-              type: 'doc',
-              content: [{ type: 'paragraph', content: [{ type: 'text', text: textContent }] }],
+              type: "doc",
+              content: [
+                {
+                  type: "paragraph",
+                  content: [{ type: "text", text: textContent }],
+                },
+              ],
             },
           },
           meta: {},
@@ -459,106 +559,124 @@ export function Board() {
         // Geo shape for symbols
         shape = {
           id,
-          type: 'geo',
-          typeName: 'shape',
+          type: "geo",
+          typeName: "shape",
           x: centerX - 40,
           y: centerY - 30,
           rotation: 0,
-          index: 'a1' as any,
-          parentId: 'page:page' as any,
+          index: "a1" as any,
+          parentId: "page:page" as any,
           isLocked: false,
           opacity: 1,
           props: {
             w: 80,
             h: 60,
-            geo: 'rectangle',
-            color: showBorder ? 'black' : 'white',
-            labelColor: 'black',
-            fill: 'none',
-            dash: 'draw',
-            size: 'xl',
-            font: 'mono',
-            align: 'middle',
-            verticalAlign: 'middle',
+            geo: "rectangle",
+            color: showBorder ? "black" : "white",
+            labelColor: "black",
+            fill: "none",
+            dash: "draw",
+            size: "xl",
+            font: "mono",
+            align: "middle",
+            verticalAlign: "middle",
             growY: 0,
-            url: '',
+            url: "",
             scale: 1,
             richText: {
-              type: 'doc',
-              content: [{ type: 'paragraph', content: [{ type: 'text', text: textContent }] }],
+              type: "doc",
+              content: [
+                {
+                  type: "paragraph",
+                  content: [{ type: "text", text: textContent }],
+                },
+              ],
             },
           },
           meta: {},
         } as any;
       }
-    } else if (componentType.startsWith('node-') || componentType.startsWith('priority-')) {
+    } else if (
+      componentType.startsWith("node-") ||
+      componentType.startsWith("priority-")
+    ) {
       // Colored nodes/boxes
-      const textContent = data?.label || '';
+      const textContent = data?.label || "";
       shape = {
         id,
-        type: 'geo',
-        typeName: 'shape',
+        type: "geo",
+        typeName: "shape",
         x: centerX - 75,
         y: centerY - 40,
         rotation: 0,
-        index: 'a1' as any,
-        parentId: 'page:page' as any,
+        index: "a1" as any,
+        parentId: "page:page" as any,
         isLocked: false,
         opacity: 1,
         props: {
           w: 150,
           h: 80,
-          geo: 'rectangle',
-          color: data?.color || 'black',
-          labelColor: 'black',
-          fill: 'solid',
-          dash: 'draw',
-          size: 'm',
-          font: 'draw',
-          align: 'middle',
-          verticalAlign: 'middle',
+          geo: "rectangle",
+          color: data?.color || "black",
+          labelColor: "black",
+          fill: "solid",
+          dash: "draw",
+          size: "m",
+          font: "draw",
+          align: "middle",
+          verticalAlign: "middle",
           growY: 0,
-          url: '',
+          url: "",
           scale: 1,
           richText: {
-            type: 'doc',
-            content: [{ type: 'paragraph', content: [{ type: 'text', text: textContent }] }],
+            type: "doc",
+            content: [
+              {
+                type: "paragraph",
+                content: [{ type: "text", text: textContent }],
+              },
+            ],
           },
         },
         meta: {},
       } as any;
     } else {
       // Default: rectangle box
-      const textContent = data?.label || '';
+      const textContent = data?.label || "";
       shape = {
         id,
-        type: 'geo',
-        typeName: 'shape',
+        type: "geo",
+        typeName: "shape",
         x: centerX - 100,
         y: centerY - 60,
         rotation: 0,
-        index: 'a1' as any,
-        parentId: 'page:page' as any,
+        index: "a1" as any,
+        parentId: "page:page" as any,
         isLocked: false,
         opacity: 1,
         props: {
           w: 200,
           h: 120,
-          geo: 'rectangle',
-          color: 'black',
-          labelColor: 'black',
-          fill: 'semi',
-          dash: 'draw',
-          size: 'm',
-          font: 'draw',
-          align: 'middle',
-          verticalAlign: 'middle',
+          geo: "rectangle",
+          color: "black",
+          labelColor: "black",
+          fill: "semi",
+          dash: "draw",
+          size: "m",
+          font: "draw",
+          align: "middle",
+          verticalAlign: "middle",
           growY: 0,
-          url: '',
+          url: "",
           scale: 1,
           richText: {
-            type: 'doc',
-            content: [{ type: 'paragraph', content: [{ type: 'text', text: textContent }] }],
+            type: "doc",
+            content: [
+              {
+                type: "paragraph",
+                content: [{ type: "text", text: textContent }],
+              },
+            ],
           },
         },
         meta: {},
@@ -567,7 +685,7 @@ export function Board() {
 
     if (shape) {
       store.put([shape]);
-      toast.success(`Added ${data?.label || 'component'}`);
+      toast.success(`Added ${data?.label || "component"}`);
     }
   };
 
@@ -642,7 +760,6 @@ export function Board() {
         </div>
 
         <div className="flex items-center gap-2">
-
           {/* Page Format Selector */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -759,7 +876,7 @@ export function Board() {
       {/* Canvas Area */}
       <main className="flex-1 relative bg-white overflow-hidden">
         {/* Template Library Floating Button - below Page 1 tab */}
-        {templateId && templateId !== 'template-blank' && (
+        {templateId && templateId !== "template-blank" && (
           <div className="absolute top-12 left-4 z-20">
             <TemplateLibraryButton
               templateId={templateId}
@@ -781,9 +898,12 @@ export function Board() {
             }}
           />
         )}
-        
+
         {/* Tldraw canvas - must fill the container properly */}
-        <div className="absolute inset-0" style={{ height: '100%', width: '100%' }}>
+        <div
+          className="absolute inset-0"
+          style={{ height: "100%", width: "100%" }}
+        >
           <Tldraw key={board.id} store={store} onMount={handleEditorMount} />
         </div>
       </main>
