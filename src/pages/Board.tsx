@@ -58,6 +58,7 @@ export function Board() {
     []
   );
   const [boardData, setBoardData] = useState<unknown>(null); // Directly fetched board data
+  const [isStoreReady, setIsStoreReady] = useState(false); // Track if store is ready with data
 
   // Create tldraw store - MUST be stable and not recreate on re-renders
   // Using useMemo instead of refs for better stability  
@@ -67,6 +68,39 @@ export function Board() {
       shapeUtils: defaultShapeUtils,
     });
   }, [id]); // Only recreate when board ID changes
+  
+  // PRE-LOAD shapes into store BEFORE Tldraw mounts
+  useEffect(() => {
+    if (!store || !boardData || isStoreReady) return;
+    
+    const data = boardData as Record<string, any>;
+    const shapes = Object.values(data).filter(
+      (item: any) => item && typeof item === "object" && item.typeName === "shape"
+    );
+    
+    if (shapes.length === 0) {
+      setIsStoreReady(true);
+      return;
+    }
+    
+    console.log("[Board] Pre-loading", shapes.length, "shapes into store before mount");
+    
+    // Use page:page as the parentId
+    const shapesWithParent = shapes.map((shape: any) => ({
+      ...shape,
+      parentId: "page:page",
+    }));
+    
+    try {
+      store.put(shapesWithParent as any);
+      console.log("[Board] Pre-loaded shapes into store");
+    } catch (e) {
+      console.error("[Board] Error pre-loading shapes:", e);
+    }
+    
+    setIsStoreReady(true);
+  }, [store, boardData, isStoreReady]);
+  
   // const saveTimeoutRef = useRef<number | undefined>(undefined); // DISABLED - no auto-save
   const loadedDataRef = useRef<string | null>(null); // Track what data we've loaded (by JSON hash)
   const hasLoadedOnceRef = useRef(false); // Track if we've done initial load
@@ -206,151 +240,18 @@ export function Board() {
     loadBoardData();
   }, [id]);
 
-  // Handle tldraw editor mount - COMPLETELY REWRITTEN LOADING SYSTEM
+  // Handle tldraw editor mount - simplified since we pre-load data
   const handleEditorMount = useCallback(
     (editor: Editor) => {
       console.log("[Board] tldraw editor mounted");
       editorRef.current = editor;
-
-      // Don't load if already loaded for this board
-      if (hasLoadedOnceRef.current) {
-        console.log(
-          "[Board] Already loaded once for this board, skipping onMount load"
-        );
-        return;
-      }
-
-      // Use directly fetched boardData if available, otherwise fall back to context board.data
-      const dataToUse =
-        boardData && Object.keys(boardData as object).length > 0
-          ? boardData
-          : board?.data && Object.keys(board.data as object).length > 0
-          ? board.data
-          : null;
-
-      if (!dataToUse) {
-        console.log("[Board] No data to load on mount");
-        hasLoadedOnceRef.current = true;
-        return;
-      }
-
-      // CRITICAL FIX: Use proper tldraw loading with correct page ID
-      const loadShapesCorrectly = () => {
-        try {
-          console.log("[Board] Starting proper shape loading...");
-
-          // Get the actual current page from tldraw
-          const currentPageId = editor.getCurrentPageId();
-          console.log("[Board] Real current page ID:", currentPageId);
-
-          // Extract shapes from data
-          const shapeData = dataToUse as Record<string, any>;
-          const shapes = Object.values(shapeData).filter(
-            (item: any) =>
-              item && typeof item === "object" && item.typeName === "shape"
-          );
-
-          console.log("[Board] Found", shapes.length, "shapes to load");
-
-          if (shapes.length === 0) {
-            hasLoadedOnceRef.current = true;
-            return;
-          }
-
-          // CRITICAL: Fix parentId to match actual current page
-          const correctedShapes = shapes.map((shape: any) => ({
-            ...shape,
-            parentId: currentPageId, // Use actual page ID, not hardcoded
-          }));
-
-          console.log(
-            "[Board] Loading shapes with correct parentId:",
-            currentPageId
-          );
-
-          // Set loading flag
-          isLoadingInitialDataRef.current = true;
-
-          // Store for debugging/watchdog
-          loadedShapesRef.current = correctedShapes;
-
-          // FIXED: Only clear shapes, NOT the entire store (which breaks pages)
-          // DEFENSIVE: Only clear if we haven't successfully loaded shapes yet
-          const existingShapes = editor.getCurrentPageShapes();
-          if (
-            existingShapes.length > 0 &&
-            !shapesLoadedSuccessfullyRef.current
-          ) {
-            editor.deleteShapes(existingShapes.map((s) => s.id));
-            console.log(
-              "[Board] Cleared",
-              existingShapes.length,
-              "existing shapes"
-            );
-          } else if (shapesLoadedSuccessfullyRef.current) {
-            console.log(
-              "[Board] DEFENSIVE: Skipping shape clearing - shapes already loaded successfully"
-            );
-          }
-
-          // CRITICAL: Use store.put() instead of editor.createShapes()
-          // editor.createShapes() adds shapes to store but they don't render in production!
-          // store.put() is what template library button uses and it WORKS
-          
-          // Convert shapes to proper TLRecord format (keep all fields)
-          const shapesToPut = correctedShapes.map((shape) => {
-            // Return the whole shape as-is (it's already a TLRecord)
-            return shape;
-          });
-          
-          // DEBUG: Log first shape to see its structure
-          console.log("[Board] First shape structure:", JSON.stringify(shapesToPut[0], null, 2));
-          
-          // Use store.put() like template library button does
-          try {
-            store.put(shapesToPut);
-            console.log("[Board] Shapes loaded via store.put():", shapesToPut.length);
-          } catch (storeError) {
-            console.error("[Board] ERROR calling store.put():", storeError);
-            throw storeError; // Re-throw to see in outer catch
-          }
-
-          // DEFENSIVE: Mark shapes as successfully loaded
-          shapesLoadedSuccessfullyRef.current = true;
-
-          // Clear loading flag immediately to avoid UI interference
-          isLoadingInitialDataRef.current = false;
-          console.log("[Board] Loading complete");
-          
-          // CRITICAL: Select all to force tldraw to recognize shapes
-          setTimeout(() => {
-            try {
-              editor.selectAll();
-              console.log("[Board] Selected all shapes to force recognition");
-              // Deselect after a moment
-              setTimeout(() => {
-                editor.selectNone();
-              }, 100);
-            } catch (e) {
-              console.error("[Board] Error selecting shapes:", e);
-            }
-          }, 200);
-
-          // REMOVED: zoomToFit was causing UI components to disappear
-          // The shapes are loaded and visible, let user zoom manually if needed
-        } catch (error) {
-          console.error("[Board] CRITICAL ERROR in shape loading:", error);
-          isLoadingInitialDataRef.current = false;
-        }
-      };
-
-      // Load after a longer delay to ensure tldraw is FULLY ready
-      // Production (Vercel) needs more time than localhost
-      setTimeout(loadShapesCorrectly, 1000); // Increased from 100ms to 1000ms
-      hasLoadedOnceRef.current = true;
+      
+      // Shapes are already in the store via pre-loading
+      // Just log the current shape count for debugging
+      const shapeCount = store.allRecords().filter((r: any) => r.typeName === "shape").length;
+      console.log("[Board] Editor mounted with", shapeCount, "shapes already in store");
     },
-    // Only depend on boardData - remove store to prevent callback recreation
-    [boardData]
+    [store]
   );
 
   // Reset loaded flags when board ID changes
@@ -359,6 +260,7 @@ export function Board() {
     hasLoadedOnceRef.current = false;
     shapesLoadedSuccessfullyRef.current = false; // DEFENSIVE: Reset success flag
     loadedShapesRef.current = [];
+    setIsStoreReady(false); // Reset store ready flag
   }, [id]);
 
   // WATCHDOG RE-ENABLED - Critical for production (Vercel) where shapes disappear
