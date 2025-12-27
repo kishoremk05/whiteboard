@@ -60,7 +60,7 @@ export function Board() {
   const [boardData, setBoardData] = useState<unknown>(null); // Directly fetched board data
 
   // Create tldraw store - MUST be stable and not recreate on re-renders
-  // Using useMemo instead of refs for better stability
+  // Using useMemo instead of refs for better stability  
   const store = useMemo(() => {
     console.log("[Board] Creating new tldraw store for board:", id);
     return createTLStore({
@@ -321,6 +321,20 @@ export function Board() {
           // Clear loading flag immediately to avoid UI interference
           isLoadingInitialDataRef.current = false;
           console.log("[Board] Loading complete");
+          
+          // CRITICAL: Select all to force tldraw to recognize shapes
+          setTimeout(() => {
+            try {
+              editor.selectAll();
+              console.log("[Board] Selected all shapes to force recognition");
+              // Deselect after a moment
+              setTimeout(() => {
+                editor.selectNone();
+              }, 100);
+            } catch (e) {
+              console.error("[Board] Error selecting shapes:", e);
+            }
+          }, 200);
 
           // REMOVED: zoomToFit was causing UI components to disappear
           // The shapes are loaded and visible, let user zoom manually if needed
