@@ -70,6 +70,7 @@ export function Board() {
   // const saveTimeoutRef = useRef<number | undefined>(undefined); // DISABLED - no auto-save
   const loadedDataRef = useRef<string | null>(null); // Track what data we've loaded (by JSON hash)
   const hasLoadedOnceRef = useRef(false); // Track if we've done initial load
+  const shapesLoadedSuccessfullyRef = useRef(false); // DEFENSIVE: Track if shapes were loaded successfully
   const editorRef = useRef<Editor | null>(null); // Store tldraw Editor instance
   const isLoadingInitialDataRef = useRef(false); // Prevent auto-save during initial load
   const loadedShapesRef = useRef<any[]>([]); // Store loaded shapes to restore if they disappear
@@ -274,13 +275,18 @@ export function Board() {
           loadedShapesRef.current = correctedShapes;
 
           // FIXED: Only clear shapes, NOT the entire store (which breaks pages)
+          // DEFENSIVE: Only clear if we haven't successfully loaded shapes yet
           const existingShapes = editor.getCurrentPageShapes();
-          if (existingShapes.length > 0) {
+          if (existingShapes.length > 0 && !shapesLoadedSuccessfullyRef.current) {
             editor.deleteShapes(existingShapes.map((s) => s.id));
             console.log(
               "[Board] Cleared",
               existingShapes.length,
               "existing shapes"
+            );
+          } else if (shapesLoadedSuccessfullyRef.current) {
+            console.log(
+              "[Board] DEFENSIVE: Skipping shape clearing - shapes already loaded successfully"
             );
           }
 
@@ -298,6 +304,9 @@ export function Board() {
           );
 
           console.log("[Board] Shapes loaded via editor.createShapes()");
+          
+          // DEFENSIVE: Mark shapes as successfully loaded
+          shapesLoadedSuccessfullyRef.current = true;
 
           // Clear loading flag immediately to avoid UI interference
           isLoadingInitialDataRef.current = false;
@@ -323,6 +332,7 @@ export function Board() {
   useEffect(() => {
     loadedDataRef.current = null;
     hasLoadedOnceRef.current = false;
+    shapesLoadedSuccessfullyRef.current = false; // DEFENSIVE: Reset success flag
     loadedShapesRef.current = [];
   }, [id]);
 
@@ -435,6 +445,11 @@ export function Board() {
         .allRecords()
         .filter((r) => r.typeName === "shape").length;
       console.log("[Board] Store changed - current shape count:", shapeCount);
+      
+      // DEFENSIVE: If shapes disappear after successful loading, log warning
+      if (shapeCount === 0 && shapesLoadedSuccessfullyRef.current) {
+        console.warn("[Board] WARNING: Shapes disappeared after successful loading! This should not happen.");
+      }
     });
 
     return () => {
