@@ -69,6 +69,7 @@ export function Board() {
   const loadedDataRef = useRef<string | null>(null); // Track what data we've loaded (by JSON hash)
   const hasLoadedOnceRef = useRef(false); // Track if we've done initial load
   const editorRef = useRef<Editor | null>(null); // Store tldraw Editor instance
+  const isLoadingInitialDataRef = useRef(false); // Prevent auto-save during initial load
 
   const board = boards.find((b) => b.id === id);
 
@@ -240,8 +241,18 @@ export function Board() {
           // Delay to ensure tldraw is fully ready
           setTimeout(() => {
             console.log("[Board] Putting shapes into store...");
+            
+            // Set flag to prevent auto-save during initial load
+            isLoadingInitialDataRef.current = true;
+            
             store.put(shapesWithCorrectParent);
             console.log("[Board] Loaded shapes into store:", shapesWithCorrectParent.length);
+            
+            // Clear flag after a delay to allow user edits to trigger auto-save
+            setTimeout(() => {
+              isLoadingInitialDataRef.current = false;
+              console.log("[Board] Initial load complete, auto-save re-enabled");
+            }, 1000);
             
             // Zoom to fit after a delay
             setTimeout(() => {
@@ -303,6 +314,12 @@ export function Board() {
     if (!store) return;
 
     const unsubscribe = store.listen(() => {
+      // Skip auto-save if we're loading initial data
+      if (isLoadingInitialDataRef.current) {
+        console.log("[Board] Skipping auto-save during initial load");
+        return;
+      }
+      
       // Clear existing timeout
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
