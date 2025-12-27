@@ -929,12 +929,12 @@ export function Board() {
         )}
 
         {/* Tldraw canvas - must fill the container properly */}
-        {/* CRITICAL: key={board.id} prevents remounting on context updates - essential for Vercel */}
+        {/* REMOVED key={board.id} - it was causing visual reset on context updates */}
         <div
           className="absolute inset-0"
           style={{ height: "100%", width: "100%" }}
         >
-          <Tldraw key={board.id} store={store} onMount={handleEditorMount} />
+          <Tldraw store={store} onMount={handleEditorMount} />
         </div>
       </main>
 
