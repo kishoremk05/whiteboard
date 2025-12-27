@@ -299,19 +299,13 @@ export function Board() {
 
           console.log("[Board] Shapes loaded via editor.createShapes()");
 
-          // Force viewport update
-          setTimeout(() => {
-            try {
-              editor.zoomToFit({ animation: { duration: 300 } });
-              console.log("[Board] Zoomed to fit content");
-            } catch (e) {
-              console.log("[Board] Could not zoom to fit:", e);
-            }
+          // Clear loading flag immediately to avoid UI interference
+          isLoadingInitialDataRef.current = false;
+          console.log("[Board] Loading complete");
 
-            // Clear loading flag
-            isLoadingInitialDataRef.current = false;
-            console.log("[Board] Loading complete");
-          }, 200);
+          // REMOVED: zoomToFit was causing UI components to disappear
+          // The shapes are loaded and visible, let user zoom manually if needed
+          
         } catch (error) {
           console.error("[Board] CRITICAL ERROR in shape loading:", error);
           isLoadingInitialDataRef.current = false;
@@ -900,7 +894,19 @@ export function Board() {
           className="absolute inset-0"
           style={{ height: "100%", width: "100%" }}
         >
-          <Tldraw store={store} onMount={handleEditorMount} />
+          <Tldraw 
+            store={store} 
+            onMount={handleEditorMount}
+            components={{
+              // Ensure UI components are explicitly enabled
+              Toolbar: undefined, // Use default
+              StylePanel: undefined, // Use default  
+              PageMenu: undefined, // Use default
+              MainMenu: undefined, // Use default
+              QuickActions: undefined, // Use default
+              ActionsMenu: undefined, // Use default
+            }}
+          />
         </div>
       </main>
 
