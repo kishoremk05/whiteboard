@@ -223,9 +223,8 @@ export function Board() {
         console.log("[Board] Shape records found:", shapeRecords.length);
         
         if (shapeRecords.length > 0) {
-          // Get the current page from the editor's store
-          const editorStore = editor.store;
-          const pages = editorStore.allRecords().filter(r => r.typeName === 'page');
+          // Get the current page from the store
+          const pages = store.allRecords().filter(r => r.typeName === 'page');
           const currentPageId = pages.length > 0 ? pages[0].id : 'page:page';
           console.log("[Board] Current page ID:", currentPageId);
           
@@ -238,9 +237,19 @@ export function Board() {
             return shape;
           });
           
-          // Put shapes into the editor's store
-          editorStore.put(shapesWithCorrectParent);
+          // Use the external store (same as template library button)
+          store.put(shapesWithCorrectParent);
           console.log("[Board] Loaded shapes via onMount:", shapesWithCorrectParent.length);
+          
+          // Zoom to fit the content so it's visible
+          setTimeout(() => {
+            try {
+              editor.zoomToFit({ animation: { duration: 200 } });
+              console.log("[Board] Zoomed to fit content");
+            } catch (e) {
+              console.log("[Board] Could not zoom to fit:", e);
+            }
+          }, 100);
         }
       }
     } catch (error) {
@@ -248,7 +257,7 @@ export function Board() {
     }
     
     hasLoadedOnceRef.current = true;
-  }, [boardData, board?.data]);
+  }, [boardData, board?.data, store]);
 
   // Reset loaded flags when board ID changes
   useEffect(() => {
