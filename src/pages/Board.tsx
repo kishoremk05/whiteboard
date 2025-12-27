@@ -294,14 +294,22 @@ export function Board() {
           }
 
           // Add shapes using editor's proper method
+          // CRITICAL FIX: Must include parentId for shapes to render!
           editor.createShapes(
             correctedShapes.map((shape) => {
-              // Convert to proper shape format for createShapes
-              const { id, typeName, parentId, ...props } = shape;
+              // Keep parentId - it's essential for rendering
+              const { id, type, typeName, parentId, x, y, rotation, isLocked, opacity, props, meta, index } = shape;
               return {
                 id,
-                type: shape.type || "geo", // fallback to geo if no type
-                ...props,
+                type: type || "geo",
+                parentId, // CRITICAL: Must include this!
+                x: x || 0,
+                y: y || 0,
+                rotation: rotation || 0,
+                isLocked: isLocked || false,
+                opacity: opacity || 1,
+                props: props || {},
+                meta: meta || {},
               };
             })
           );
