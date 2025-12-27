@@ -70,6 +70,7 @@ export function Board() {
   const hasLoadedOnceRef = useRef(false); // Track if we've done initial load
   const editorRef = useRef<Editor | null>(null); // Store tldraw Editor instance
   const isLoadingInitialDataRef = useRef(false); // Prevent auto-save during initial load
+  const loadedShapesRef = useRef<any[]>([]); // Store loaded shapes to restore if they disappear
 
   const board = boards.find((b) => b.id === id);
 
@@ -245,6 +246,9 @@ export function Board() {
             // Set flag to prevent auto-save during initial load
             isLoadingInitialDataRef.current = true;
             
+            // Store shapes in ref for watchdog
+            loadedShapesRef.current = shapesWithCorrectParent;
+            
             store.put(shapesWithCorrectParent);
             console.log("[Board] Loaded shapes into store:", shapesWithCorrectParent.length);
             
@@ -277,7 +281,30 @@ export function Board() {
   useEffect(() => {
     loadedDataRef.current = null;
     hasLoadedOnceRef.current = false;
+    loadedShapesRef.current = [];
   }, [id]);
+
+  // Watchdog: Restore shapes if they disappear (production failsafe)
+  useEffect(() => {
+    if (!store || loadedShapesRef.current.length === 0) return;
+
+    const intervalId = setInterval(() => {
+      const currentShapes = store.allRecords().filter(r => r.typeName === 'shape');
+      
+      // If shapes disappeared but we have them in ref, restore them
+      if (currentShapes.length === 0 && loadedShapesRef.current.length > 0) {
+        console.log("[Board] WATCHDOG: Shapes disappeared! Restoring", loadedShapesRef.current.length, "shapes");
+        isLoadingInitialDataRef.current = true;
+        store.put(loadedShapesRef.current);
+        setTimeout(() => {
+          isLoadingInitialDataRef.current = false;
+        }, 500);
+      }
+    }, 1000); // Check every second
+
+    return () => clearInterval(intervalId);
+  }, [store]);
+
 
   // Auto-save on content changes (debounced)
   const handleSave = useCallback(async () => {
