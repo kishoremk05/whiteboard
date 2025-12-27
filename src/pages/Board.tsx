@@ -211,27 +211,35 @@ export function Board() {
           // Log first few items to understand structure
           if (allValues.length > 0) {
             console.log("[Board] Sample value:", JSON.stringify(allValues[0]).slice(0, 200));
+            console.log("[Board] Record types in snapshot:", [...new Set(allValues.map((r: any) => r?.typeName))].join(', '));
           }
           
-          // Filter out any invalid or outdated records
-          const validRecords = allValues.filter((record): record is TLRecord => {
-            const isValid = record && typeof record === 'object' && 'id' in record && 'typeName' in record;
-            return isValid;
+          // CRITICAL: Only filter for SHAPE records
+          // tldraw internal records (page, camera, pointer, instance_page_state, etc.) 
+          // should NOT be loaded as they conflict with tldraw's own state management
+          const shapeRecords = allValues.filter((record): record is TLRecord => {
+            const isShape = record && 
+                           typeof record === 'object' && 
+                           'id' in record && 
+                           'typeName' in record &&
+                           (record as any).typeName === 'shape';
+            return isShape;
           });
           
-          console.log("[Board] Valid records found:", validRecords.length);
+          console.log("[Board] Shape records found:", shapeRecords.length);
           
-          if (validRecords.length > 0) {
+          if (shapeRecords.length > 0) {
             // Clear existing shapes first to avoid duplicates
-            const existingRecords = store.allRecords().filter(r => r.typeName === 'shape');
-            if (existingRecords.length > 0) {
-              store.remove(existingRecords.map(r => r.id));
+            const existingShapes = store.allRecords().filter(r => r.typeName === 'shape');
+            if (existingShapes.length > 0) {
+              store.remove(existingShapes.map(r => r.id));
             }
             
-            store.put(validRecords);
-            console.log("[Board] Loaded content from database:", validRecords.length, "records");
+            store.put(shapeRecords);
+            console.log("[Board] Loaded shapes from database:", shapeRecords.length, "shapes");
           } else {
-            console.log("[Board] No valid records to load. Raw data sample:", JSON.stringify(dataToUse).slice(0, 500));
+            console.log("[Board] No shape records to load. Record types found:", 
+              [...new Set(allValues.map((r: any) => r?.typeName))].join(', '));
           }
         }
       } catch (error) {
@@ -254,10 +262,13 @@ export function Board() {
 
     try {
       setIsSaving(true);
-      // Get all records as a snapshot
-      const records = store.allRecords();
+      // Get only SHAPE records for saving - don't save internal tldraw state
+      // (pages, cameras, pointers, etc. are managed by tldraw itself)
+      const allRecords = store.allRecords();
+      const shapeRecords = allRecords.filter(r => r.typeName === 'shape');
+      
       const snapshot: Record<string, TLRecord> = {};
-      records.forEach((record) => {
+      shapeRecords.forEach((record) => {
         snapshot[record.id] = record;
       });
 
