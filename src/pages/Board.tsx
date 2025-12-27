@@ -223,36 +223,58 @@ export function Board() {
         console.log("[Board] Shape records found:", shapeRecords.length);
         
         if (shapeRecords.length > 0) {
-          // Get the current page from the store
-          const pages = store.allRecords().filter(r => r.typeName === 'page');
-          const currentPageId = pages.length > 0 ? pages[0].id : 'page:page';
+          // Get the current page from the editor
+          const currentPageId = editor.getCurrentPageId();
           console.log("[Board] Current page ID:", currentPageId);
           
-          // Update shapes to use correct parentId
-          const shapesWithCorrectParent = shapeRecords.map(shape => {
+          // Convert TLRecords to shape partials for createShapes
+          const shapePartials = shapeRecords.map(shape => {
             const shapeRecord = shape as any;
-            if (shapeRecord.parentId && shapeRecord.parentId !== currentPageId) {
-              return { ...shapeRecord, parentId: currentPageId };
-            }
-            return shape;
+            // Ensure parentId matches current page
+            return {
+              ...shapeRecord,
+              parentId: currentPageId,
+            };
           });
           
-          // CRITICAL: Defer to next tick to fix production timing issue
-          // React production mode handles mount differently than dev mode
+          // CRITICAL: Use editor.createShapes API instead of store.put
+          // This is tldraw's proper method for adding shapes and triggers correct reactivity
           setTimeout(() => {
-            store.put(shapesWithCorrectParent);
-            console.log("[Board] Loaded shapes via onMount (deferred):", shapesWithCorrectParent.length);
-            
-            // Zoom to fit the content so it's visible
-            setTimeout(() => {
-              try {
-                editor.zoomToFit({ animation: { duration: 200 } });
-                console.log("[Board] Zoomed to fit content");
-              } catch (e) {
-                console.log("[Board] Could not zoom to fit:", e);
-              }
-            }, 100);
-          }, 0);
+            try {
+              // Use the editor's createShapes method (tldraw recommended way)
+              // First, clear any IDs to let tldraw generate new ones if needed
+              const shapesToCreate = shapePartials.map((shape: any) => ({
+                id: shape.id,
+                type: shape.type,
+                x: shape.x,
+                y: shape.y,
+                rotation: shape.rotation || 0,
+                isLocked: shape.isLocked || false,
+                opacity: shape.opacity || 1,
+                props: shape.props,
+                meta: shape.meta || {},
+                parentId: currentPageId,
+              }));
+              
+              editor.createShapes(shapesToCreate);
+              console.log("[Board] Created shapes via editor API:", shapesToCreate.length);
+              
+              // Zoom to fit the content so it's visible
+              setTimeout(() => {
+                try {
+                  editor.zoomToFit({ animation: { duration: 200 } });
+                  console.log("[Board] Zoomed to fit content");
+                } catch (e) {
+                  console.log("[Board] Could not zoom to fit:", e);
+                }
+              }, 200);
+            } catch (e) {
+              console.error("[Board] Failed to create shapes:", e);
+              // Fallback to store.put
+              store.put(shapePartials);
+              console.log("[Board] Fallback: used store.put");
+            }
+          }, 100); // Increased delay to 100ms
         }
       }
     } catch (error) {
