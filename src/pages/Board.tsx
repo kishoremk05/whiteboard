@@ -235,14 +235,33 @@ export function Board() {
           console.log("[Board] Shape records found:", shapeRecords.length);
           
           if (shapeRecords.length > 0) {
+            // Get the current page from tldraw's store
+            const pages = store.allRecords().filter(r => r.typeName === 'page');
+            const currentPageId = pages.length > 0 ? pages[0].id : 'page:page';
+            console.log("[Board] Current tldraw page ID:", currentPageId);
+            
+            // Update shapes to use the correct current page parentId
+            const shapesWithCorrectParent = shapeRecords.map(shape => {
+              const shapeRecord = shape as any;
+              // If the shape's parentId doesn't match current page, update it
+              if (shapeRecord.parentId && shapeRecord.parentId !== currentPageId) {
+                console.log("[Board] Updating shape parentId from", shapeRecord.parentId, "to", currentPageId);
+                return {
+                  ...shapeRecord,
+                  parentId: currentPageId
+                };
+              }
+              return shape;
+            });
+            
             // Clear existing shapes first to avoid duplicates
             const existingShapes = store.allRecords().filter(r => r.typeName === 'shape');
             if (existingShapes.length > 0) {
               store.remove(existingShapes.map(r => r.id));
             }
             
-            store.put(shapeRecords);
-            console.log("[Board] Loaded shapes from database:", shapeRecords.length, "shapes");
+            store.put(shapesWithCorrectParent);
+            console.log("[Board] Loaded shapes from database:", shapesWithCorrectParent.length, "shapes");
           } else {
             console.log("[Board] No shape records to load. Record types found:", 
               [...new Set(allValues.map((r: any) => r?.typeName))].join(', '));
