@@ -63,7 +63,7 @@ export function Board() {
     })
   );
   const saveTimeoutRef = useRef<number | undefined>(undefined);
-  const hasLoadedRef = useRef(false); // Prevent re-loading after initial load
+  const loadedDataRef = useRef<string | null>(null); // Track what data we've loaded (by JSON hash)
 
   const board = boards.find((b) => b.id === id);
 
@@ -136,10 +136,17 @@ export function Board() {
     }
   }, [board, loadCollaborators]);
 
-  // Load initial content from database - ONLY ONCE
+  // Load initial content from database - reload when data changes
   useEffect(() => {
-    // Only load once per board
-    if (hasLoadedRef.current || !board?.id || !store) return;
+    if (!board?.id || !store) return;
+    
+    // Create a simple hash of the data to detect changes
+    const dataHash = board.data ? JSON.stringify(board.data).slice(0, 100) : 'empty';
+    
+    // Only load if the data has changed
+    if (loadedDataRef.current === dataHash) {
+      return;
+    }
     
     if (board?.data) {
       try {
@@ -152,6 +159,12 @@ export function Board() {
           });
           
           if (validRecords.length > 0) {
+            // Clear existing shapes first to avoid duplicates
+            const existingRecords = store.allRecords().filter(r => r.typeName === 'shape');
+            if (existingRecords.length > 0) {
+              store.remove(existingRecords.map(r => r.id));
+            }
+            
             store.put(validRecords);
             console.log("[Board] Loaded content from database:", validRecords.length, "records");
           }
@@ -162,12 +175,12 @@ export function Board() {
       }
     }
     
-    hasLoadedRef.current = true;
+    loadedDataRef.current = dataHash;
   }, [board?.id, board?.data, store]);
 
   // Reset loaded flag when board ID changes
   useEffect(() => {
-    hasLoadedRef.current = false;
+    loadedDataRef.current = null;
   }, [id]);
 
   // Auto-save on content changes (debounced)

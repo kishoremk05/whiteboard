@@ -14,6 +14,7 @@ export async function fetchUserWhiteboards(userId: string): Promise<DbWhiteboard
         .from('whiteboards')
         .select('*')
         .eq('user_id', userId)
+        .or('is_deleted.is.null,is_deleted.eq.false')
         .order('updated_at', { ascending: false });
 
     if (error) throw error;
