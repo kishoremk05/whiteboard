@@ -298,7 +298,7 @@ export function Board() {
           editor.createShapes(
             correctedShapes.map((shape) => {
               // Keep parentId - it's essential for rendering
-              const { id, type, typeName, parentId, x, y, rotation, isLocked, opacity, props, meta, index } = shape;
+              const { id, type, parentId, x, y, rotation, isLocked, opacity, props, meta } = shape;
               return {
                 id,
                 type: type || "geo",
