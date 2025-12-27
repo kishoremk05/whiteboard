@@ -322,6 +322,15 @@ export function Board() {
                 "[Board] Loaded shapes into store:",
                 shapesWithCorrectParent.length
               );
+              
+              // Verify shapes are actually in the store
+              setTimeout(() => {
+                const verifyShapes = store.allRecords().filter(r => r.typeName === 'shape');
+                console.log("[Board] VERIFY: Shapes in store after put:", verifyShapes.length);
+                if (verifyShapes.length === 0) {
+                  console.error("[Board] ERROR: Shapes disappeared immediately after put!");
+                }
+              }, 100);
 
               // Clear flag after a delay to allow user edits to trigger auto-save
               setTimeout(() => {

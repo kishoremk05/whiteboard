@@ -335,47 +335,9 @@ export function BoardProvider({ children }: { children: ReactNode }) {
     }
   }, [isAuthenticated, user?.id, refreshBoards, refreshOrganizations]);
 
-  /**
-   * DISABLED: Real-time subscription causing issues with board editing
-   * Uncomment when debugging is complete
-   */
-  /*
-  useEffect(() => {
-    if (!user?.id) return;
-
-    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-
-    const channel = supabase
-      .channel("boards-changes")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "whiteboards",
-          filter: `user_id=eq.${user.id}`,
-        },
-        () => {
-          // Debounce refresh to prevent rapid-fire updates during auto-save
-          if (debounceTimer) {
-            clearTimeout(debounceTimer);
-          }
-          debounceTimer = setTimeout(() => {
-            console.log("[BoardContext] Real-time update - refreshing boards");
-            refreshBoards();
-          }, 3000); // 3 second debounce to let auto-save settle
-        }
-      )
-      .subscribe();
-
-    return () => {
-      if (debounceTimer) {
-        clearTimeout(debounceTimer);
-      }
-      supabase.removeChannel(channel);
-    };
-  }, [user?.id, refreshBoards]);
-  */
+  // COMPLETELY DISABLED FOR DEBUGGING - Real-time subscription was causing board clearing issues
+  // DO NOT UNCOMMENT UNTIL BUG IS FIXED
+  // Last disabled: Dec 28, 2025
 
   /**
    * Create a new board
