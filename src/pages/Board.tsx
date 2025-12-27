@@ -73,7 +73,7 @@ export function Board() {
     console.log("[Board] Created new store for board:", id);
   }
   const store = storeRef.current;
-  const saveTimeoutRef = useRef<number | undefined>(undefined);
+  // const saveTimeoutRef = useRef<number | undefined>(undefined); // DISABLED - no auto-save
   const loadedDataRef = useRef<string | null>(null); // Track what data we've loaded (by JSON hash)
   const hasLoadedOnceRef = useRef(false); // Track if we've done initial load
   const editorRef = useRef<Editor | null>(null); // Store tldraw Editor instance
