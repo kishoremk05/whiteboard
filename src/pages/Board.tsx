@@ -307,9 +307,13 @@ export function Board() {
           console.log("[Board] First shape structure:", JSON.stringify(shapesToPut[0], null, 2));
           
           // Use store.put() like template library button does
-          store.put(shapesToPut);
-          
-          console.log("[Board] Shapes loaded via store.put():", shapesToPut.length);
+          try {
+            store.put(shapesToPut);
+            console.log("[Board] Shapes loaded via store.put():", shapesToPut.length);
+          } catch (storeError) {
+            console.error("[Board] ERROR calling store.put():", storeError);
+            throw storeError; // Re-throw to see in outer catch
+          }
 
           // DEFENSIVE: Mark shapes as successfully loaded
           shapesLoadedSuccessfullyRef.current = true;
@@ -326,8 +330,9 @@ export function Board() {
         }
       };
 
-      // Load after a delay to ensure tldraw is fully ready
-      setTimeout(loadShapesCorrectly, 100);
+      // Load after a longer delay to ensure tldraw is FULLY ready
+      // Production (Vercel) needs more time than localhost
+      setTimeout(loadShapesCorrectly, 1000); // Increased from 100ms to 1000ms
       hasLoadedOnceRef.current = true;
     },
     // Only depend on boardData - remove store to prevent callback recreation
