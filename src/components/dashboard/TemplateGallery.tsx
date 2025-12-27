@@ -261,12 +261,12 @@ export function TemplateGallery({ open, onOpenChange }: TemplateGalleryProps) {
                     };
 
                     return (
-                      <button
+                      <div
                         key={template.id}
                         onClick={() => setSelectedTemplate(template.id)}
                         onDoubleClick={() => setPreviewTemplate(template.id)}
                         className={cn(
-                          "group relative p-4 rounded-2xl border-2 text-left transition-all duration-300",
+                          "group relative p-4 rounded-2xl border-2 text-left transition-all duration-300 cursor-pointer",
                           "hover:shadow-lg hover:-translate-y-0.5",
                           "animate-in fade-in-0 slide-in-from-bottom-2",
                           selectedTemplate === template.id
@@ -341,7 +341,7 @@ export function TemplateGallery({ open, onOpenChange }: TemplateGalleryProps) {
                             <Check className="w-3.5 h-3.5 text-white" />
                           </div>
                         )}
-                      </button>
+                      </div>
                     );
                   })}
                 </div>

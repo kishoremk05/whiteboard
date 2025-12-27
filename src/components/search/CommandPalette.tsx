@@ -20,7 +20,7 @@ import {
     Plus,
     ExternalLink,
 } from 'lucide-react';
-import { useBoards } from '../../contexts/BoardContext';
+import { useBoardsSafe } from '../../contexts/BoardContext';
 
 interface CommandPaletteProps {
     open: boolean;
@@ -29,11 +29,16 @@ interface CommandPaletteProps {
 
 export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
     const navigate = useNavigate();
-    const { boards, createBoard, searchBoards } = useBoards();
+    const boardsContext = useBoardsSafe();
     const [search, setSearch] = useState('');
 
+    // Provide fallbacks when context is not available
+    const boards = boardsContext?.boards || [];
+    const createBoard = boardsContext?.createBoard;
+    const searchBoards = boardsContext?.searchBoards;
+
     // Filter boards based on search
-    const filteredBoards = search ? searchBoards(search).slice(0, 5) : boards.slice(0, 5);
+    const filteredBoards = search && searchBoards ? searchBoards(search).slice(0, 5) : boards.slice(0, 5);
 
     // Keyboard shortcut to open
     useEffect(() => {
@@ -55,8 +60,12 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
 
             switch (action) {
                 case 'new-board':
-                    const board = await createBoard('Untitled Board');
-                    navigate(`/board/${board.id}`);
+                    if (createBoard) {
+                        const board = await createBoard('Untitled Board');
+                        navigate(`/board/${board.id}`);
+                    } else {
+                        navigate('/dashboard');
+                    }
                     break;
                 case 'all-boards':
                     navigate('/dashboard');

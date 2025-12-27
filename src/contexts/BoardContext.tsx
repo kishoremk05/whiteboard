@@ -659,3 +659,9 @@ export function useBoards() {
   }
   return context;
 }
+
+// Safe version that returns null instead of throwing - for optional usage
+export function useBoardsSafe() {
+  const context = useContext(BoardContext);
+  return context; // Returns undefined if outside provider
+}

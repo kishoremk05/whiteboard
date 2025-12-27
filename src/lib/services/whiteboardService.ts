@@ -100,11 +100,17 @@ export async function updateWhiteboard(id: string, updates: WhiteboardUpdate): P
         .from('whiteboards')
         .update({ ...updates, updated_at: new Date().toISOString() })
         .eq('id', id)
-        .select()
-        .single();
+        .select();
 
     if (error) throw error;
-    return data;
+
+    // Handle case where no rows were updated (board doesn't exist or RLS prevents access)
+    if (!data || data.length === 0) {
+        console.error('[updateWhiteboard] No rows updated for id:', id);
+        throw new Error(`Could not update board: Board ${id} not found or access denied`);
+    }
+
+    return data[0];
 }
 
 /**

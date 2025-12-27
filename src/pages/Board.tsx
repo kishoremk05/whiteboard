@@ -10,18 +10,10 @@ import {
   FileText,
   UserPlus,
 } from "lucide-react";
-import {
-  Tldraw,
-  createTLStore,
-  defaultShapeUtils,
-  createShapeId,
-  type TLRecord,
-  type Editor,
-} from "@tldraw/tldraw";
-import "@tldraw/tldraw/tldraw.css";
+import { Excalidraw } from "@excalidraw/excalidraw";
+import "@excalidraw/excalidraw/index.css";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
-import { TldrawErrorBoundary } from "../components/TldrawErrorBoundary";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -60,32 +52,8 @@ export function Board() {
   );
   const [boardData, setBoardData] = useState<unknown>(null); // Directly fetched board data
 
-  // Create tldraw store ONCE using ref - never recreate!
-  // This prevents Tldraw from resetting when component re-renders
-  const storeRef = useRef<ReturnType<typeof createTLStore> | null>(null);
-  const storeBoardIdRef = useRef<string | undefined>(undefined);
-  
-  // Initialize store only once per board
-  if (!storeRef.current || storeBoardIdRef.current !== id) {
-    console.log("[Board] Creating new tldraw store for board:", id);
-    storeRef.current = createTLStore({
-      shapeUtils: defaultShapeUtils,
-    });
-    storeBoardIdRef.current = id;
-  }
-  
-  const store = storeRef.current;
-
-  // Refs
-  const editorRef = useRef<Editor | null>(null);
-  const hasLoadedDataRef = useRef(false);
-  const loadedDataRef = useRef<string | null>(null);
-  const hasLoadedOnceRef = useRef(false);
-  const shapesLoadedSuccessfullyRef = useRef(false);
-  const isLoadingInitialDataRef = useRef(false);
-  const loadedShapesRef = useRef<any[]>([]);
-  const isSavingRef = useRef(false);
-  const lastSaveTimeRef = useRef<number>(0);
+  // Excalidraw API ref
+  const excalidrawAPIRef = useRef<any>(null);
 
   const board = boards.find((b) => b.id === id);
 
@@ -216,194 +184,71 @@ export function Board() {
     loadBoardData();
   }, [id]);
 
-  // Handle tldraw editor mount - load shapes directly
-  const handleEditorMount = useCallback(
-    (editor: Editor) => {
-      console.log("[Board] tldraw editor mounted");
-      editorRef.current = editor;
-      
-      // Check if already loaded
-      if (hasLoadedDataRef.current) {
-        console.log("[Board] Already loaded data, skipping");
-        return;
-      }
-      
-      // Get data from boardData or board.data
-      const dataSource = boardData || board?.data;
-      if (!dataSource || typeof dataSource !== 'object') {
-        console.log("[Board] No data to load");
-        hasLoadedDataRef.current = true;
-        return;
-      }
-      
-      const data = dataSource as Record<string, any>;
-      const shapes = Object.values(data).filter(
-        (item: any) => item && typeof item === "object" && item.typeName === "shape"
-      );
-      
-      if (shapes.length === 0) {
-        console.log("[Board] No shapes found in data");
-        hasLoadedDataRef.current = true;
-        return;
-      }
-      
-      console.log("[Board] Loading", shapes.length, "shapes");
-      
-      // Fix parentId to match current page
-      const currentPageId = editor.getCurrentPageId();
-      const shapesWithParent = shapes.map((shape: any) => ({
-        ...shape,
-        parentId: currentPageId,
-      }));
-      
-      // Store for watchdog
-      loadedShapesRef.current = shapesWithParent;
-      
-      // Use editor.store.put() - direct approach
-      try {
-        editor.store.put(shapesWithParent);
-        console.log("[Board] Shapes loaded successfully");
-        hasLoadedDataRef.current = true;
-      } catch (e) {
-        console.error("[Board] Error loading shapes:", e);
-      }
-    },
-    [boardData, board?.data]
-  );
 
-  // Reset loaded flags when board ID changes
+  // Load saved Excalidraw data when board data is available
   useEffect(() => {
-    loadedDataRef.current = null;
-    hasLoadedOnceRef.current = false;
-    hasLoadedDataRef.current = false;
-    shapesLoadedSuccessfullyRef.current = false;
-    loadedShapesRef.current = [];
-  }, [id]);
+    const api = excalidrawAPIRef.current;
+    if (!api || !boardData) return;
 
-  // WATCHDOG - restores shapes if they disappear
-  useEffect(() => {
-    if (loadedShapesRef.current.length === 0) return;
+    // Check if board data is in Excalidraw format (version 2)
+    const data = boardData as any;
+    if (data.version === 2 && Array.isArray(data.elements)) {
+      console.log("[Board] Loading", data.elements.length, "saved Excalidraw elements");
+      api.updateScene({
+        elements: data.elements,
+        appState: data.appState || {},
+      });
+      toast.success(`Loaded ${data.elements.length} elements`);
+    } else {
+      console.log("[Board] Board data is not in Excalidraw format, starting fresh");
+    }
+  }, [boardData]);
 
-    const intervalId = setInterval(() => {
-      const editor = editorRef.current;
-      if (!editor) return;
-      
-      // Don't run watchdog during initial load
-      if (isLoadingInitialDataRef.current) return;
-
-      const currentShapes = editor.store
-        .allRecords()
-        .filter((r: any) => r.typeName === "shape");
-
-      // If shapes disappeared but we have them in ref, restore them
-      if (currentShapes.length === 0 && loadedShapesRef.current.length > 0) {
-        console.warn(
-          "[Board] WATCHDOG: Shapes disappeared! Restoring",
-          loadedShapesRef.current.length,
-          "shapes"
-        );
-        isLoadingInitialDataRef.current = true;
-        editor.store.put(loadedShapesRef.current);
-        setTimeout(() => {
-          isLoadingInitialDataRef.current = false;
-          console.log(
-            "[Board] WATCHDOG: Shapes restored"
-          );
-        }, 500);
-      }
-    }, 2000); // Check every 2 seconds
-
-    return () => clearInterval(intervalId);
-  }, []);
-
-
-  // Manual save only - Use refs for board ID to avoid recreating this function on every board context update
-  const boardIdRef = useRef<string | undefined>(board?.id);
-  boardIdRef.current = board?.id;
-
+  // Save Excalidraw data to Supabase - moved before conditional return for hooks order
   const handleSave = useCallback(async () => {
-    const currentBoardId = boardIdRef.current;
-    if (!currentBoardId || !store || !editorRef.current) return;
-
-    // Prevent concurrent saves
-    if (isSavingRef.current) {
-      console.log("[Board] Save already in progress, skipping");
+    const api = excalidrawAPIRef.current;
+    if (!api || !id) {
+      toast.error("Cannot save: Canvas or board not ready");
       return;
     }
 
-    // Prevent saves within 1 second of each other
-    const now = Date.now();
-    if (now - lastSaveTimeRef.current < 1000) {
-      console.log("[Board] Too soon since last save, skipping");
+    if (isSaving) {
+      toast.info("Save already in progress...");
       return;
     }
 
     try {
-      isSavingRef.current = true;
       setIsSaving(true);
+      
+      const elements = api.getSceneElements();
+      const appState = api.getAppState();
 
-      // IMPROVED: Get shapes using editor instead of direct store access
-      const allShapes = editorRef.current.getCurrentPageShapes();
-      console.log("[Board] Found", allShapes.length, "shapes to save");
+      const saveData = {
+        elements: elements,
+        appState: {
+          viewBackgroundColor: appState.viewBackgroundColor,
+          gridSize: appState.gridSize,
+        },
+        savedAt: new Date().toISOString(),
+        version: 2,
+      };
 
-      // Convert shapes to saveable format
-      const snapshot: Record<string, any> = {};
-      allShapes.forEach((shape) => {
-        snapshot[shape.id] = {
-          ...shape,
-          typeName: "shape", // Ensure typeName is set for loading
-        };
+      console.log("[Board] Saving", elements.length, "elements to Supabase");
+
+      await updateBoard(id, {
+        data: saveData as Record<string, unknown>,
       });
 
-      console.log("[Board] Saving", allShapes.length, "shapes to database");
-
-      await updateBoard(currentBoardId, {
-        data: snapshot as Record<string, unknown>,
-      });
-
-      // Update boardData state with saved data to keep it in sync
-      setBoardData(snapshot as Record<string, unknown>);
-
-      // Update loadedShapesRef to reflect current state
-      loadedShapesRef.current = allShapes;
-
-      lastSaveTimeRef.current = Date.now();
       setLastSaved(new Date());
-      console.log("[Board] Content MANUALLY saved, boardData state updated");
-      toast.success("Board saved successfully!");
+      setBoardData(saveData);
+      toast.success(`Saved ${elements.length} elements successfully!`);
     } catch (error) {
       console.error("[Board] Failed to save:", error);
-      toast.error("Failed to save changes");
+      toast.error("Failed to save board");
     } finally {
-      isSavingRef.current = false;
       setIsSaving(false);
     }
-  }, [store, updateBoard]);
-
-  // AUTO-SAVE DISABLED - Only manual save via button
-  // Listen to store changes for logging purposes only (debugging)
-  useEffect(() => {
-    if (!store) return;
-
-    const unsubscribe = store.listen(() => {
-      // Just log changes, don't auto-save
-      const shapeCount = store
-        .allRecords()
-        .filter((r) => r.typeName === "shape").length;
-      console.log("[Board] Store changed - current shape count:", shapeCount);
-
-      // DEFENSIVE: If shapes disappear after successful loading, log warning
-      if (shapeCount === 0 && shapesLoadedSuccessfullyRef.current) {
-        console.warn(
-          "[Board] WARNING: Shapes disappeared after successful loading! This should not happen."
-        );
-      }
-    });
-
-    return () => {
-      unsubscribe();
-    };
-  }, [store]);
+  }, [id, isSaving, updateBoard]);
 
   if (!board) {
     return (
@@ -437,208 +282,77 @@ export function Board() {
     toast.success("Link copied to clipboard");
   };
 
-  // Insert template-specific components
+  // Insert template-specific components (Excalidraw version)
   const insertTemplateComponent = (componentType: string, data?: any) => {
-    if (!store) return;
-
-    console.log("Inserting component:", componentType, data);
-
-    // Simple positioning - add near center
-    const centerX = 500;
-    const centerY = 400;
-
-    const id = createShapeId();
-
-    // Create shape based on component type
-    let shape: TLRecord | null = null;
-
-    if (
-      componentType.startsWith("symbol-") ||
-      componentType === "formula" ||
-      componentType === "equation-box" ||
-      componentType.startsWith("equation-")
-    ) {
-      // Text-based components
-      const textContent = data?.symbol || data?.label || "";
-      const showBorder = componentType === "equation-box";
-      const isEquation =
-        componentType.startsWith("equation-") &&
-        componentType !== "equation-box";
-
-      // Use note shape for equations (editable) vs geo for symbols
-      if (isEquation) {
-        // Geo shape for equations - transparent border, just text
-        shape = {
-          id,
-          type: "geo",
-          typeName: "shape",
-          x: centerX - 100,
-          y: centerY - 30,
-          rotation: 0,
-          index: "a1" as any,
-          parentId: "page:page" as any,
-          isLocked: false,
-          opacity: 1,
-          props: {
-            w: 200,
-            h: 60,
-            geo: "rectangle",
-            color: "white",
-            labelColor: "black",
-            fill: "none",
-            dash: "draw",
-            size: "l",
-            font: "mono",
-            align: "middle",
-            verticalAlign: "middle",
-            growY: 0,
-            url: "",
-            scale: 1,
-            richText: {
-              type: "doc",
-              content: [
-                {
-                  type: "paragraph",
-                  content: [{ type: "text", text: textContent }],
-                },
-              ],
-            },
-          },
-          meta: {},
-        } as any;
-      } else {
-        // Geo shape for symbols
-        shape = {
-          id,
-          type: "geo",
-          typeName: "shape",
-          x: centerX - 40,
-          y: centerY - 30,
-          rotation: 0,
-          index: "a1" as any,
-          parentId: "page:page" as any,
-          isLocked: false,
-          opacity: 1,
-          props: {
-            w: 80,
-            h: 60,
-            geo: "rectangle",
-            color: showBorder ? "black" : "white",
-            labelColor: "black",
-            fill: "none",
-            dash: "draw",
-            size: "xl",
-            font: "mono",
-            align: "middle",
-            verticalAlign: "middle",
-            growY: 0,
-            url: "",
-            scale: 1,
-            richText: {
-              type: "doc",
-              content: [
-                {
-                  type: "paragraph",
-                  content: [{ type: "text", text: textContent }],
-                },
-              ],
-            },
-          },
-          meta: {},
-        } as any;
-      }
-    } else if (
-      componentType.startsWith("node-") ||
-      componentType.startsWith("priority-")
-    ) {
-      // Colored nodes/boxes
-      const textContent = data?.label || "";
-      shape = {
-        id,
-        type: "geo",
-        typeName: "shape",
-        x: centerX - 75,
-        y: centerY - 40,
-        rotation: 0,
-        index: "a1" as any,
-        parentId: "page:page" as any,
-        isLocked: false,
-        opacity: 1,
-        props: {
-          w: 150,
-          h: 80,
-          geo: "rectangle",
-          color: data?.color || "black",
-          labelColor: "black",
-          fill: "solid",
-          dash: "draw",
-          size: "m",
-          font: "draw",
-          align: "middle",
-          verticalAlign: "middle",
-          growY: 0,
-          url: "",
-          scale: 1,
-          richText: {
-            type: "doc",
-            content: [
-              {
-                type: "paragraph",
-                content: [{ type: "text", text: textContent }],
-              },
-            ],
-          },
-        },
-        meta: {},
-      } as any;
-    } else {
-      // Default: rectangle box
-      const textContent = data?.label || "";
-      shape = {
-        id,
-        type: "geo",
-        typeName: "shape",
-        x: centerX - 100,
-        y: centerY - 60,
-        rotation: 0,
-        index: "a1" as any,
-        parentId: "page:page" as any,
-        isLocked: false,
-        opacity: 1,
-        props: {
-          w: 200,
-          h: 120,
-          geo: "rectangle",
-          color: "black",
-          labelColor: "black",
-          fill: "semi",
-          dash: "draw",
-          size: "m",
-          font: "draw",
-          align: "middle",
-          verticalAlign: "middle",
-          growY: 0,
-          url: "",
-          scale: 1,
-          richText: {
-            type: "doc",
-            content: [
-              {
-                type: "paragraph",
-                content: [{ type: "text", text: textContent }],
-              },
-            ],
-          },
-        },
-        meta: {},
-      } as any;
+    const api = excalidrawAPIRef.current;
+    if (!api) {
+      toast.error("Canvas not ready yet");
+      return;
     }
 
-    if (shape) {
-      store.put([shape]);
-      toast.success(`Added ${data?.label || "component"}`);
-    }
+    console.log("[Board] Inserting component:", componentType, data);
+
+    // Get text content from data
+    const textContent = data?.symbol || data?.label || componentType;
+    
+    // Create a unique ID
+    const elementId = `element-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Get current scene to find center position
+    const appState = api.getAppState();
+    const centerX = appState.scrollX + appState.width / 2;
+    const centerY = appState.scrollY + appState.height / 2;
+
+    // Create a text element
+    const newElement = {
+      id: elementId,
+      type: "text",
+      x: centerX - 50,
+      y: centerY - 20,
+      width: 100,
+      height: 40,
+      angle: 0,
+      strokeColor: data?.color === "red" ? "#e03131" : 
+                   data?.color === "blue" ? "#1971c2" :
+                   data?.color === "green" ? "#2f9e44" :
+                   data?.color === "yellow" ? "#f08c00" : "#1e1e1e",
+      backgroundColor: "transparent",
+      fillStyle: "hachure",
+      strokeWidth: 1,
+      strokeStyle: "solid",
+      roughness: 1,
+      opacity: 100,
+      groupIds: [],
+      frameId: null,
+      roundness: null,
+      seed: Math.floor(Math.random() * 100000),
+      version: 1,
+      versionNonce: Math.floor(Math.random() * 100000),
+      isDeleted: false,
+      boundElements: null,
+      updated: Date.now(),
+      link: null,
+      locked: false,
+      text: textContent,
+      fontSize: 20,
+      fontFamily: 1,
+      textAlign: "center",
+      verticalAlign: "middle",
+      containerId: null,
+      originalText: textContent,
+      lineHeight: 1.25,
+    };
+
+    // Add the element to the scene
+    const currentElements = api.getSceneElements();
+    api.updateScene({
+      elements: [...currentElements, newElement],
+    });
+
+    toast.success(`Added: ${data?.label || componentType}`);
   };
+
+
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-100">
@@ -685,7 +399,7 @@ export function Board() {
             />
           </button>
 
-          {/* Manual Save Button */}
+          {/* Save Button */}
           <Button
             onClick={handleSave}
             disabled={isSaving}
@@ -704,7 +418,7 @@ export function Board() {
             ) : (
               <>
                 <Check className="w-4 h-4" />
-                <span>Save</span>
+                <span>{lastSaved ? "Saved" : "Save"}</span>
               </>
             )}
           </Button>
@@ -850,17 +564,20 @@ export function Board() {
           />
         )}
 
-        {/* Tldraw canvas - must fill the container properly */}
+        {/* Excalidraw canvas - must fill the container properly */}
         <div
           className="absolute inset-0"
           style={{ height: "100%", width: "100%" }}
         >
-          <TldrawErrorBoundary>
-            <Tldraw 
-              store={store} 
-              onMount={handleEditorMount}
-            />
-          </TldrawErrorBoundary>
+          <Excalidraw
+            excalidrawAPI={(api) => { excalidrawAPIRef.current = api; }}
+            theme="light"
+            UIOptions={{
+              canvasActions: {
+                loadScene: false,
+              }
+            }}
+          />
         </div>
       </main>
 
