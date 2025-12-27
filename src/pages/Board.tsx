@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -60,19 +60,13 @@ export function Board() {
   const [boardData, setBoardData] = useState<unknown>(null); // Directly fetched board data
 
   // Create tldraw store - MUST be stable and not recreate on re-renders
-  // Using useRef to ensure the store persists across all re-renders for this board
-  const storeRef = useRef<ReturnType<typeof createTLStore> | null>(null);
-  const storeCreatedForIdRef = useRef<string | null>(null);
-
-  // Create store only once per board ID
-  if (!storeRef.current || storeCreatedForIdRef.current !== id) {
-    storeRef.current = createTLStore({
+  // Using useMemo instead of refs for better stability
+  const store = useMemo(() => {
+    console.log("[Board] Creating new tldraw store for board:", id);
+    return createTLStore({
       shapeUtils: defaultShapeUtils,
     });
-    storeCreatedForIdRef.current = id || null;
-    console.log("[Board] Created new store for board:", id);
-  }
-  const store = storeRef.current;
+  }, [id]); // Only recreate when board ID changes
   // const saveTimeoutRef = useRef<number | undefined>(undefined); // DISABLED - no auto-save
   const loadedDataRef = useRef<string | null>(null); // Track what data we've loaded (by JSON hash)
   const hasLoadedOnceRef = useRef(false); // Track if we've done initial load
@@ -321,8 +315,8 @@ export function Board() {
       setTimeout(loadShapesCorrectly, 100);
       hasLoadedOnceRef.current = true;
     },
-    // Only depend on boardData and store - NOT board?.data to prevent re-triggering
-    [boardData, store]
+    // Only depend on boardData - remove store to prevent callback recreation
+    [boardData]
   );
 
   // Reset loaded flags when board ID changes
@@ -899,10 +893,7 @@ export function Board() {
           className="absolute inset-0"
           style={{ height: "100%", width: "100%" }}
         >
-          <Tldraw
-            store={store}
-            onMount={handleEditorMount}
-          />
+          <Tldraw store={store} onMount={handleEditorMount} />
         </div>
       </main>
 
