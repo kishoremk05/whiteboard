@@ -58,58 +58,25 @@ export function Board() {
     []
   );
   const [boardData, setBoardData] = useState<unknown>(null); // Directly fetched board data
-  const [isStoreReady, setIsStoreReady] = useState(false); // Track if store is ready with data
 
-  // Create tldraw store - MUST be stable and not recreate on re-renders
-  // Using useMemo instead of refs for better stability  
+  // Create tldraw store - stable across re-renders
   const store = useMemo(() => {
     console.log("[Board] Creating new tldraw store for board:", id);
     return createTLStore({
       shapeUtils: defaultShapeUtils,
     });
-  }, [id]); // Only recreate when board ID changes
-  
-  // PRE-LOAD shapes into store BEFORE Tldraw mounts
-  useEffect(() => {
-    if (!store || !boardData || isStoreReady) return;
-    
-    const data = boardData as Record<string, any>;
-    const shapes = Object.values(data).filter(
-      (item: any) => item && typeof item === "object" && item.typeName === "shape"
-    );
-    
-    if (shapes.length === 0) {
-      setIsStoreReady(true);
-      return;
-    }
-    
-    console.log("[Board] Pre-loading", shapes.length, "shapes into store before mount");
-    
-    // Use page:page as the parentId
-    const shapesWithParent = shapes.map((shape: any) => ({
-      ...shape,
-      parentId: "page:page",
-    }));
-    
-    try {
-      store.put(shapesWithParent as any);
-      console.log("[Board] Pre-loaded shapes into store");
-    } catch (e) {
-      console.error("[Board] Error pre-loading shapes:", e);
-    }
-    
-    setIsStoreReady(true);
-  }, [store, boardData, isStoreReady]);
-  
-  // const saveTimeoutRef = useRef<number | undefined>(undefined); // DISABLED - no auto-save
-  const loadedDataRef = useRef<string | null>(null); // Track what data we've loaded (by JSON hash)
-  const hasLoadedOnceRef = useRef(false); // Track if we've done initial load
-  const shapesLoadedSuccessfullyRef = useRef(false); // DEFENSIVE: Track if shapes were loaded successfully
-  const editorRef = useRef<Editor | null>(null); // Store tldraw Editor instance
-  const isLoadingInitialDataRef = useRef(false); // Prevent auto-save during initial load
-  const loadedShapesRef = useRef<any[]>([]); // Store loaded shapes to restore if they disappear
-  const isSavingRef = useRef(false); // Track saving state to prevent concurrent saves
-  const lastSaveTimeRef = useRef<number>(0); // Prevent rapid-fire saves
+  }, [id]);
+
+  // Refs
+  const editorRef = useRef<Editor | null>(null);
+  const hasLoadedDataRef = useRef(false);
+  const loadedDataRef = useRef<string | null>(null);
+  const hasLoadedOnceRef = useRef(false);
+  const shapesLoadedSuccessfullyRef = useRef(false);
+  const isLoadingInitialDataRef = useRef(false);
+  const loadedShapesRef = useRef<any[]>([]);
+  const isSavingRef = useRef(false);
+  const lastSaveTimeRef = useRef<number>(0);
 
   const board = boards.find((b) => b.id === id);
 
@@ -240,27 +207,68 @@ export function Board() {
     loadBoardData();
   }, [id]);
 
-  // Handle tldraw editor mount - simplified since we pre-load data
+  // Handle tldraw editor mount - load shapes directly
   const handleEditorMount = useCallback(
     (editor: Editor) => {
       console.log("[Board] tldraw editor mounted");
       editorRef.current = editor;
       
-      // Shapes are already in the store via pre-loading
-      // Just log the current shape count for debugging
-      const shapeCount = store.allRecords().filter((r: any) => r.typeName === "shape").length;
-      console.log("[Board] Editor mounted with", shapeCount, "shapes already in store");
+      // Check if already loaded
+      if (hasLoadedDataRef.current) {
+        console.log("[Board] Already loaded data, skipping");
+        return;
+      }
+      
+      // Get data from boardData or board.data
+      const dataSource = boardData || board?.data;
+      if (!dataSource || typeof dataSource !== 'object') {
+        console.log("[Board] No data to load");
+        hasLoadedDataRef.current = true;
+        return;
+      }
+      
+      const data = dataSource as Record<string, any>;
+      const shapes = Object.values(data).filter(
+        (item: any) => item && typeof item === "object" && item.typeName === "shape"
+      );
+      
+      if (shapes.length === 0) {
+        console.log("[Board] No shapes found in data");
+        hasLoadedDataRef.current = true;
+        return;
+      }
+      
+      console.log("[Board] Loading", shapes.length, "shapes");
+      
+      // Fix parentId to match current page
+      const currentPageId = editor.getCurrentPageId();
+      const shapesWithParent = shapes.map((shape: any) => ({
+        ...shape,
+        parentId: currentPageId,
+      }));
+      
+      // Store for watchdog
+      loadedShapesRef.current = shapesWithParent;
+      
+      // Use editor.store.put() - direct approach
+      try {
+        editor.store.put(shapesWithParent);
+        console.log("[Board] Shapes loaded successfully");
+        hasLoadedDataRef.current = true;
+      } catch (e) {
+        console.error("[Board] Error loading shapes:", e);
+      }
     },
-    [store]
+    [boardData, board?.data]
   );
 
   // Reset loaded flags when board ID changes
   useEffect(() => {
     loadedDataRef.current = null;
     hasLoadedOnceRef.current = false;
-    shapesLoadedSuccessfullyRef.current = false; // DEFENSIVE: Reset success flag
+    hasLoadedDataRef.current = false;
+    shapesLoadedSuccessfullyRef.current = false;
     loadedShapesRef.current = [];
-    setIsStoreReady(false); // Reset store ready flag
   }, [id]);
 
   // WATCHDOG RE-ENABLED - Critical for production (Vercel) where shapes disappear
@@ -831,12 +839,12 @@ export function Board() {
         )}
 
         {/* Tldraw canvas - must fill the container properly */}
-        {/* REMOVED key={board.id} - it was causing visual reset on context updates */}
+        {/* Let Tldraw manage its own store - we load data via editor.store in onMount */}
         <div
           className="absolute inset-0"
           style={{ height: "100%", width: "100%" }}
         >
-          <Tldraw store={store} onMount={handleEditorMount} />
+          <Tldraw onMount={handleEditorMount} />
         </div>
       </main>
 
