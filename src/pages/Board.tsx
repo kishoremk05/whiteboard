@@ -36,6 +36,7 @@ import {
   fetchCollaborators,
   type CollaboratorWithUser,
 } from "../lib/services/collaboratorService";
+import { fetchWhiteboard } from "../lib/services/whiteboardService";
 import { getInitials } from "../lib/utils";
 import { cn } from "../lib/utils";
 import { toast } from "sonner";
@@ -55,6 +56,7 @@ export function Board() {
   const [collaborators, setCollaborators] = useState<CollaboratorWithUser[]>(
     []
   );
+  const [boardData, setBoardData] = useState<unknown>(null); // Directly fetched board data
 
   // Create tldraw store
   const [store] = useState(() =>
@@ -136,27 +138,88 @@ export function Board() {
     }
   }, [board, loadCollaborators]);
 
+  // Directly fetch board data from database to ensure we have the latest content
+  useEffect(() => {
+    const loadBoardData = async () => {
+      if (!id) return;
+      
+      try {
+        console.log("[Board] Directly fetching board data from database for:", id);
+        const whiteboard = await fetchWhiteboard(id);
+        
+        if (whiteboard?.data) {
+          console.log("[Board] Direct fetch got data:", typeof whiteboard.data, Object.keys(whiteboard.data as object).length, "keys");
+          setBoardData(whiteboard.data);
+        } else {
+          console.log("[Board] Direct fetch returned no data");
+        }
+      } catch (error) {
+        console.error("[Board] Error directly fetching board data:", error);
+      }
+    };
+    
+    loadBoardData();
+  }, [id]);
+
   // Load initial content from database - reload when data changes
   useEffect(() => {
     if (!board?.id || !store) return;
     
+    // Use directly fetched boardData if available, otherwise fall back to context board.data
+    const dataToUse = boardData || board.data;
+    
     // Create a simple hash of the data to detect changes
-    const dataHash = board.data ? JSON.stringify(board.data).slice(0, 100) : 'empty';
+    const dataHash = dataToUse ? JSON.stringify(dataToUse).slice(0, 100) : 'empty';
     
     // Only load if the data has changed
     if (loadedDataRef.current === dataHash) {
       return;
     }
     
-    if (board?.data) {
+    if (dataToUse) {
       try {
+        console.log("[Board] Raw data from source:", dataToUse);
+        console.log("[Board] Data type:", typeof dataToUse);
+        console.log("[Board] Data keys:", Object.keys(dataToUse as object));
+        console.log("[Board] Using directly fetched data:", !!boardData);
+        
+        // Handle different data structures
+        let dataToLoad = dataToUse as Record<string, unknown>;
+        
+        // Check if data is wrapped in a 'store' property (tldraw snapshot format)
+        if ('store' in dataToLoad && typeof dataToLoad.store === 'object') {
+          dataToLoad = dataToLoad.store as Record<string, unknown>;
+          console.log("[Board] Found nested 'store' property, extracting...");
+        }
+        
+        // Check if it has a document property (another tldraw format)
+        if ('document' in dataToLoad && typeof dataToLoad.document === 'object') {
+          const doc = dataToLoad.document as Record<string, unknown>;
+          if ('store' in doc) {
+            dataToLoad = doc.store as Record<string, unknown>;
+            console.log("[Board] Found nested 'document.store' property, extracting...");
+          }
+        }
+        
         // Load snapshot if data exists
-        const snapshot = board.data as Record<string, TLRecord>;
+        const snapshot = dataToLoad as Record<string, TLRecord>;
         if (snapshot && typeof snapshot === 'object' && Object.keys(snapshot).length > 0) {
+          // Get all values and filter for valid TLRecords
+          const allValues = Object.values(snapshot);
+          console.log("[Board] Total values in snapshot:", allValues.length);
+          
+          // Log first few items to understand structure
+          if (allValues.length > 0) {
+            console.log("[Board] Sample value:", JSON.stringify(allValues[0]).slice(0, 200));
+          }
+          
           // Filter out any invalid or outdated records
-          const validRecords = Object.values(snapshot).filter((record): record is TLRecord => {
-            return record && typeof record === 'object' && 'id' in record && 'typeName' in record;
+          const validRecords = allValues.filter((record): record is TLRecord => {
+            const isValid = record && typeof record === 'object' && 'id' in record && 'typeName' in record;
+            return isValid;
           });
+          
+          console.log("[Board] Valid records found:", validRecords.length);
           
           if (validRecords.length > 0) {
             // Clear existing shapes first to avoid duplicates
@@ -167,6 +230,8 @@ export function Board() {
             
             store.put(validRecords);
             console.log("[Board] Loaded content from database:", validRecords.length, "records");
+          } else {
+            console.log("[Board] No valid records to load. Raw data sample:", JSON.stringify(dataToUse).slice(0, 500));
           }
         }
       } catch (error) {
@@ -176,7 +241,7 @@ export function Board() {
     }
     
     loadedDataRef.current = dataHash;
-  }, [board?.id, board?.data, store]);
+  }, [board?.id, board?.data, boardData, store]);
 
   // Reset loaded flag when board ID changes
   useEffect(() => {
