@@ -762,7 +762,7 @@ export function Board() {
         
         {/* Tldraw canvas - must fill the container properly */}
         <div className="absolute inset-0" style={{ height: '100%', width: '100%' }}>
-          <Tldraw store={store} onMount={handleEditorMount} />
+          <Tldraw key={board.id} store={store} onMount={handleEditorMount} />
         </div>
       </main>
 
