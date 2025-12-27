@@ -336,12 +336,13 @@ export function BoardProvider({ children }: { children: ReactNode }) {
   }, [isAuthenticated, user?.id, refreshBoards, refreshOrganizations]);
 
   /**
-   * Subscribe to real-time board changes
-   * NOTE: Debounced to prevent rapid re-fetches during auto-save
+   * DISABLED: Real-time subscription causing issues with board editing
+   * Uncomment when debugging is complete
    */
+  /*
   useEffect(() => {
     if (!user?.id) return;
-    
+
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
     const channel = supabase
@@ -374,6 +375,7 @@ export function BoardProvider({ children }: { children: ReactNode }) {
       supabase.removeChannel(channel);
     };
   }, [user?.id, refreshBoards]);
+  */
 
   /**
    * Create a new board
@@ -399,16 +401,28 @@ export function BoardProvider({ children }: { children: ReactNode }) {
       // Get template content if template is specified
       let boardData: Record<string, unknown> | null = null;
       if (template) {
-        const { getTemplateContent, hasTemplateContent } = await import("../lib/templateInitializer");
-        
+        const { getTemplateContent, hasTemplateContent } = await import(
+          "../lib/templateInitializer"
+        );
+
         // Check if template has pre-populated content
         if (hasTemplateContent(template)) {
           boardData = getTemplateContent(template) as Record<string, unknown>;
-          console.log("Loading template content for:", template, "with", Object.keys(boardData).length, "shapes");
+          console.log(
+            "Loading template content for:",
+            template,
+            "with",
+            Object.keys(boardData).length,
+            "shapes"
+          );
         } else {
           // Fallback to empty board
           boardData = null;
-          console.log("No template content found for:", template, "- creating blank board");
+          console.log(
+            "No template content found for:",
+            template,
+            "- creating blank board"
+          );
         }
       }
 
@@ -419,7 +433,9 @@ export function BoardProvider({ children }: { children: ReactNode }) {
         organization_id: currentOrganization?.id || null,
         data: boardData,
         preview: null,
-        metadata: template ? { template } as Record<string, unknown> : undefined,
+        metadata: template
+          ? ({ template } as Record<string, unknown>)
+          : undefined,
       });
 
       console.log("Created whiteboard:", newWhiteboard);
@@ -471,7 +487,7 @@ export function BoardProvider({ children }: { children: ReactNode }) {
    */
   const deleteBoard = async (id: string): Promise<void> => {
     await deleteWhiteboardService(id);
-    
+
     const board = boards.find((b) => b.id === id);
     if (board) {
       // Move to deleted boards
@@ -488,10 +504,14 @@ export function BoardProvider({ children }: { children: ReactNode }) {
    */
   const restoreBoard = async (id: string): Promise<void> => {
     await restoreWhiteboardService(id);
-    
+
     const board = deletedBoards.find((b) => b.id === id);
     if (board) {
-      const restoredBoard = { ...board, isDeleted: false, deletedAt: undefined };
+      const restoredBoard = {
+        ...board,
+        isDeleted: false,
+        deletedAt: undefined,
+      };
       setDeletedBoards((prev) => prev.filter((b) => b.id !== id));
       setBoards((prev) => [restoredBoard, ...prev]);
     }

@@ -63,14 +63,14 @@ export function Board() {
   // Using useRef to ensure the store persists across all re-renders for this board
   const storeRef = useRef<ReturnType<typeof createTLStore> | null>(null);
   const storeCreatedForIdRef = useRef<string | null>(null);
-  
+
   // Create store only once per board ID
   if (!storeRef.current || storeCreatedForIdRef.current !== id) {
     storeRef.current = createTLStore({
       shapeUtils: defaultShapeUtils,
     });
     storeCreatedForIdRef.current = id || null;
-    console.log('[Board] Created new store for board:', id);
+    console.log("[Board] Created new store for board:", id);
   }
   const store = storeRef.current;
   const saveTimeoutRef = useRef<number | undefined>(undefined);
@@ -362,7 +362,8 @@ export function Board() {
     loadedShapesRef.current = [];
   }, [id]);
 
-  // Watchdog: Restore shapes if they disappear (production failsafe)
+  // WATCHDOG DISABLED FOR DEBUGGING - was causing potential issues
+  /*
   useEffect(() => {
     if (!store || loadedShapesRef.current.length === 0) return;
 
@@ -394,22 +395,22 @@ export function Board() {
 
     return () => clearInterval(intervalId);
   }, [store]);
+  */
 
-  // Auto-save on content changes (debounced)
-  // Use refs for board ID to avoid recreating this function on every board context update
+  // Manual save only - Use refs for board ID to avoid recreating this function on every board context update
   const boardIdRef = useRef<string | undefined>(board?.id);
   boardIdRef.current = board?.id;
-  
+
   const handleSave = useCallback(async () => {
     const currentBoardId = boardIdRef.current;
     if (!currentBoardId || !store) return;
-    
+
     // Prevent concurrent saves
     if (isSavingRef.current) {
       console.log("[Board] Save already in progress, skipping");
       return;
     }
-    
+
     // Prevent saves within 1 second of each other
     const now = Date.now();
     if (now - lastSaveTimeRef.current < 1000) {
@@ -420,7 +421,7 @@ export function Board() {
     try {
       isSavingRef.current = true;
       setIsSaving(true);
-      
+
       // Get only SHAPE records for saving - don't save internal tldraw state
       // (pages, cameras, pointers, etc. are managed by tldraw itself)
       const allRecords = store.allRecords();
@@ -430,7 +431,7 @@ export function Board() {
       shapeRecords.forEach((record) => {
         snapshot[record.id] = record;
       });
-      
+
       console.log("[Board] Saving", shapeRecords.length, "shapes to database");
 
       await updateBoard(currentBoardId, {
@@ -451,7 +452,8 @@ export function Board() {
 
       lastSaveTimeRef.current = Date.now();
       setLastSaved(new Date());
-      console.log("[Board] Content auto-saved, boardData state updated");
+      console.log("[Board] Content MANUALLY saved, boardData state updated");
+      toast.success("Board saved successfully!");
     } catch (error) {
       console.error("[Board] Failed to save:", error);
       toast.error("Failed to save changes");
@@ -462,35 +464,21 @@ export function Board() {
     // Use only updateBoard and store as dependencies - board ID is tracked via ref
   }, [store, updateBoard]);
 
-  // Listen to store changes and debounce save
+  // AUTO-SAVE DISABLED - Only manual save via button
+  // Listen to store changes for logging purposes only (debugging)
   useEffect(() => {
     if (!store) return;
 
     const unsubscribe = store.listen(() => {
-      // Skip auto-save if we're loading initial data
-      if (isLoadingInitialDataRef.current) {
-        console.log("[Board] Skipping auto-save during initial load");
-        return;
-      }
-
-      // Clear existing timeout
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
-
-      // Debounce save by 2 seconds
-      saveTimeoutRef.current = setTimeout(() => {
-        handleSave();
-      }, 2000);
+      // Just log changes, don't auto-save
+      const shapeCount = store.allRecords().filter(r => r.typeName === 'shape').length;
+      console.log("[Board] Store changed - current shape count:", shapeCount);
     });
 
     return () => {
       unsubscribe();
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
     };
-  }, [store, handleSave]);
+  }, [store]);
 
   if (!board) {
     return (
