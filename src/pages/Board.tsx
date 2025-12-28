@@ -5,6 +5,7 @@ import {
   Star,
   Check,
   FileText,
+  Users,
 } from "lucide-react";
 import { Tldraw, Editor } from "tldraw";
 import "tldraw/tldraw.css";
@@ -19,6 +20,9 @@ import {
 import { ExportModal } from "../components/dashboard/ExportModal";
 import { TeamCollaborateModal } from "../components/board/TeamCollaborateModal";
 import { TemplateLibraryButton } from "../components/board/TemplateLibraryButton";
+import { AIAssistanceToggle, type AIMode } from "../components/board/AIAssistanceToggle";
+import { AIResponsePanel } from "../components/board/AIResponsePanel";
+import { AIGeneratePanel } from "../components/board/AIGeneratePanel";
 import { Avatar, AvatarFallback } from "../components/ui/avatar";
 import { useBoards } from "../contexts/BoardContext";
 import {
@@ -26,6 +30,9 @@ import {
   type CollaboratorWithUser,
 } from "../lib/services/collaboratorService";
 import { fetchWhiteboard } from "../lib/services/whiteboardService";
+import { handleCanvasAnalysis } from "../lib/aiUtils";
+import { generateFromText, generateFromImage } from "../lib/services/geminiService";
+import { parseShapeCommands, insertShapesOnCanvas } from "../lib/shapeGenerator";
 import { getInitials, cn } from "../lib/utils";
 import { toast } from "sonner";
 
@@ -47,6 +54,13 @@ export function Board() {
   const [pageFormat, setPageFormat] = useState<"blank" | "ruled">("blank");
   const [templateId, setTemplateId] = useState<string | undefined>(undefined);
   const [collaborators, setCollaborators] = useState<CollaboratorWithUser[]>([]);
+  const [aiMode, setAIMode] = useState<AIMode>("off");
+  
+  // AI State
+  const [aiResponse, setAIResponse] = useState<string | null>(null);
+  const [aiError, setAIError] = useState<string | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // TLDraw refs
   const editorRef = useRef<Editor | null>(null);
@@ -443,6 +457,17 @@ export function Board() {
             </div>
           )}
 
+          {/* Collaborate Button */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShareBoardModalOpen(true)}
+            className="gap-2"
+          >
+            <Users className="w-4 h-4" />
+            <span className="hidden sm:inline">Collaborate</span>
+          </Button>
+
           {/* Share Button */}
           <Button
             variant="outline"
@@ -471,6 +496,98 @@ export function Board() {
             <TemplateLibraryButton
               templateId={templateId}
               onInsertComponent={insertTemplateComponent}
+            />
+          </div>
+        )}
+
+        {/* AI Assistance Toggle */}
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20">
+          <AIAssistanceToggle
+            mode={aiMode}
+            onModeChange={setAIMode}
+            onAnalyze={async () => {
+              setIsAnalyzing(true);
+              setAIError(null);
+              setAIResponse(null);
+              const result = await handleCanvasAnalysis(editorRef.current, aiMode);
+              setAIResponse(result.response);
+              setAIError(result.error);
+              setIsAnalyzing(false);
+            }}
+            isAnalyzing={isAnalyzing}
+          />
+        </div>
+
+        {/* AI Response Panel - only for analysis modes */}
+        {aiMode !== "off" && aiMode !== "generate" && (aiResponse || aiError || isAnalyzing) && (
+          <div className="absolute bottom-4 right-4 z-20">
+            <AIResponsePanel
+              mode={aiMode}
+              content={aiResponse}
+              error={aiError}
+              isLoading={isAnalyzing}
+              onClose={() => {
+                setAIResponse(null);
+                setAIError(null);
+              }}
+            />
+          </div>
+        )}
+
+        {/* AI Generate Panel - only for generate mode */}
+        {aiMode === "generate" && (
+          <div className="absolute bottom-4 right-4 z-20">
+            <AIGeneratePanel
+              isGenerating={isGenerating}
+              onClose={() => setAIMode("off")}
+              onStop={() => {
+                setIsGenerating(false);
+                toast.info("Generation stopped");
+              }}
+              onGenerateFromText={async (prompt) => {
+                if (!editorRef.current) return;
+                setIsGenerating(true);
+                try {
+                  const result = await generateFromText(prompt);
+                  if (result.success && result.content) {
+                    const shapes = parseShapeCommands(result.content);
+                    const count = insertShapesOnCanvas(editorRef.current, shapes);
+                    if (count > 0) {
+                      toast.success(`Generated ${count} shapes!`);
+                    } else {
+                      toast.warning("No valid shapes generated. Try a different prompt.");
+                    }
+                  } else {
+                    toast.error(result.error || "Generation failed");
+                  }
+                } catch (error) {
+                  toast.error("Generation failed");
+                } finally {
+                  setIsGenerating(false);
+                }
+              }}
+              onGenerateFromImage={async (imageBase64) => {
+                if (!editorRef.current) return;
+                setIsGenerating(true);
+                try {
+                  const result = await generateFromImage(imageBase64);
+                  if (result.success && result.content) {
+                    const shapes = parseShapeCommands(result.content);
+                    const count = insertShapesOnCanvas(editorRef.current, shapes);
+                    if (count > 0) {
+                      toast.success(`Generated ${count} shapes from image!`);
+                    } else {
+                      toast.warning("Couldn't recreate image. Try a simpler image.");
+                    }
+                  } else {
+                    toast.error(result.error || "Generation failed");
+                  }
+                } catch (error) {
+                  toast.error("Generation failed");
+                } finally {
+                  setIsGenerating(false);
+                }
+              }}
             />
           </div>
         )}
