@@ -2,23 +2,18 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
-  Share,
-  Download,
-  MoreHorizontal,
   Star,
   Check,
   FileText,
-  UserPlus,
 } from "lucide-react";
-import { Excalidraw } from "@excalidraw/excalidraw";
-import "@excalidraw/excalidraw/index.css";
+import { Tldraw, Editor } from "tldraw";
+import "tldraw/tldraw.css";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../components/ui/dropdown-menu";
 import { ExportModal } from "../components/dashboard/ExportModal";
@@ -31,14 +26,18 @@ import {
   type CollaboratorWithUser,
 } from "../lib/services/collaboratorService";
 import { fetchWhiteboard } from "../lib/services/whiteboardService";
-import { getInitials } from "../lib/utils";
-import { cn } from "../lib/utils";
+import { getInitials, cn } from "../lib/utils";
 import { toast } from "sonner";
+
+// TLDraw License Key from environment
+const TLDRAW_LICENSE_KEY = import.meta.env.VITE_TLDRAW_LICENSE_KEY || "";
 
 export function Board() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { boards, updateBoard, toggleFavorite } = useBoards();
+
+  // UI State
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState("");
   const [exportModalOpen, setExportModalOpen] = useState(false);
@@ -47,16 +46,27 @@ export function Board() {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [pageFormat, setPageFormat] = useState<"blank" | "ruled">("blank");
   const [templateId, setTemplateId] = useState<string | undefined>(undefined);
-  const [collaborators, setCollaborators] = useState<CollaboratorWithUser[]>(
-    []
-  );
-  const [boardData, setBoardData] = useState<unknown>(null); // Directly fetched board data
+  const [collaborators, setCollaborators] = useState<CollaboratorWithUser[]>([]);
 
-  // Excalidraw API ref
-  const excalidrawAPIRef = useRef<any>(null);
+  // TLDraw refs
+  const editorRef = useRef<Editor | null>(null);
+  const hasLoadedDataRef = useRef(false);
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isLoadingRef = useRef(false);
+  const currentBoardIdRef = useRef<string | null>(null);
 
   const board = boards.find((b) => b.id === id);
 
+  // Reset state when board changes
+  useEffect(() => {
+    if (id && id !== currentBoardIdRef.current) {
+      currentBoardIdRef.current = id;
+      hasLoadedDataRef.current = false;
+      editorRef.current = null;
+    }
+  }, [id]);
+
+  // Load collaborators
   const loadCollaborators = useCallback(async () => {
     if (!id) return;
     try {
@@ -67,189 +77,173 @@ export function Board() {
     }
   }, [id]);
 
+  // Detect template from board
   useEffect(() => {
     if (board) {
       setTitle(board.title);
-
-      // Get template ID - either from metadata or infer from title
+      
       let detectedTemplateId: string | undefined = board.template;
-
-      // If template ID is a database UUID (not our internal template-* format),
-      // use title-based inference instead
       const isInternalTemplateId = detectedTemplateId?.startsWith("template-");
-
+      
       if (!isInternalTemplateId && board.title) {
         const titleLower = board.title.toLowerCase();
-        // Math-related templates
-        if (
-          titleLower.includes("calculus") ||
-          titleLower.includes("derivative")
-        ) {
-          detectedTemplateId = "template-calculus";
-        } else if (titleLower.includes("quadratic")) {
-          detectedTemplateId = "template-quadratic";
-        } else if (titleLower.includes("math problem")) {
+        if (titleLower.includes("math") || titleLower.includes("equation")) {
           detectedTemplateId = "template-math";
-        } else if (
-          titleLower.includes("math") ||
-          titleLower.includes("equation")
-        ) {
-          detectedTemplateId = "template-math";
-          // Mind mapping & brainstorming
         } else if (titleLower.includes("mind map")) {
           detectedTemplateId = "template-mindmap";
         } else if (titleLower.includes("brainstorm")) {
           detectedTemplateId = "template-brainstorm";
-          // Project management
         } else if (titleLower.includes("kanban")) {
           detectedTemplateId = "template-kanban";
-        } else if (
-          titleLower.includes("flowchart") ||
-          titleLower.includes("flow chart")
-        ) {
+        } else if (titleLower.includes("flowchart")) {
           detectedTemplateId = "template-flowchart";
-          // Education
-        } else if (
-          titleLower.includes("teaching") ||
-          titleLower.includes("lecture")
-        ) {
-          detectedTemplateId = "template-teaching";
-        } else if (titleLower.includes("cornell")) {
-          detectedTemplateId = "template-cornell";
-          // Meetings
-        } else if (titleLower.includes("meeting")) {
-          detectedTemplateId = "template-meeting";
-          // Design
-        } else if (
-          titleLower.includes("wireframe") ||
-          titleLower.includes("wireframing")
-        ) {
-          detectedTemplateId = "template-wireframe";
-          // Science
-        } else if (
-          titleLower.includes("physics") ||
-          titleLower.includes("free body")
-        ) {
-          detectedTemplateId = "template-physics";
-        } else if (
-          titleLower.includes("chemistry") ||
-          titleLower.includes("chemical") ||
-          titleLower.includes("molecular")
-        ) {
-          detectedTemplateId = "template-chemistry";
         }
       }
-
-      setTemplateId(detectedTemplateId);
-      console.log(
-        "[Board] Detected template:",
-        detectedTemplateId,
-        "from board:",
-        board.title
-      );
-
-      // Fetch collaborators
+      
+      if (detectedTemplateId) {
+        console.log("[Board] Detected template:", detectedTemplateId);
+        setTemplateId(detectedTemplateId);
+      }
+      
       loadCollaborators();
     }
   }, [board, loadCollaborators]);
 
-  // Directly fetch board data from database to ensure we have the latest content
-  useEffect(() => {
-    const loadBoardData = async () => {
-      if (!id) return;
-
-      try {
-        console.log(
-          "[Board] Directly fetching board data from database for:",
-          id
-        );
-        const whiteboard = await fetchWhiteboard(id);
-
-        if (whiteboard?.data) {
-          console.log(
-            "[Board] Direct fetch got data:",
-            typeof whiteboard.data,
-            Object.keys(whiteboard.data as object).length,
-            "keys"
-          );
-          setBoardData(whiteboard.data);
-        } else {
-          console.log("[Board] Direct fetch returned no data");
-        }
-      } catch (error) {
-        console.error("[Board] Error directly fetching board data:", error);
-      }
-    };
-
-    loadBoardData();
-  }, [id]);
-
-
-  // Load saved Excalidraw data when board data is available
-  useEffect(() => {
-    const api = excalidrawAPIRef.current;
-    if (!api || !boardData) return;
-
-    // Check if board data is in Excalidraw format (version 2)
-    const data = boardData as any;
-    if (data.version === 2 && Array.isArray(data.elements)) {
-      console.log("[Board] Loading", data.elements.length, "saved Excalidraw elements");
-      api.updateScene({
-        elements: data.elements,
-        appState: data.appState || {},
-      });
-      toast.success(`Loaded ${data.elements.length} elements`);
-    } else {
-      console.log("[Board] Board data is not in Excalidraw format, starting fresh");
-    }
-  }, [boardData]);
-
-  // Save Excalidraw data to Supabase - moved before conditional return for hooks order
-  const handleSave = useCallback(async () => {
-    const api = excalidrawAPIRef.current;
-    if (!api || !id) {
-      toast.error("Cannot save: Canvas or board not ready");
-      return;
-    }
-
-    if (isSaving) {
-      toast.info("Save already in progress...");
-      return;
-    }
+  // Debounced save function
+  const saveToDatabase = useCallback(async () => {
+    if (!id || !editorRef.current || isSaving) return;
 
     try {
       setIsSaving(true);
       
-      const elements = api.getSceneElements();
-      const appState = api.getAppState();
-
+      const editor = editorRef.current;
+      // Get all records from the store
+      const allRecords = editor.store.allRecords();
+      
       const saveData = {
-        elements: elements,
-        appState: {
-          viewBackgroundColor: appState.viewBackgroundColor,
-          gridSize: appState.gridSize,
-        },
+        records: allRecords,
         savedAt: new Date().toISOString(),
         version: 2,
       };
 
-      console.log("[Board] Saving", elements.length, "elements to Supabase");
-
+      console.log("[Board] Saving", allRecords.length, "records to database");
+      
       await updateBoard(id, {
         data: saveData as Record<string, unknown>,
       });
 
       setLastSaved(new Date());
-      setBoardData(saveData);
-      toast.success(`Saved ${elements.length} elements successfully!`);
+      toast.success("Board saved!");
     } catch (error) {
-      console.error("[Board] Failed to save:", error);
-      toast.error("Failed to save board");
+      console.error("[Board] Save failed:", error);
+      toast.error("Failed to save");
     } finally {
       setIsSaving(false);
     }
   }, [id, isSaving, updateBoard]);
 
+  // Handle manual save
+  const handleSave = useCallback(() => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    saveToDatabase();
+  }, [saveToDatabase]);
+
+  // Handle editor mount
+  const handleEditorMount = useCallback((editor: Editor) => {
+    console.log("[Board] TLDraw editor mounted for board:", id);
+    editorRef.current = editor;
+
+    // Load saved data if available
+    if (!hasLoadedDataRef.current && id) {
+      isLoadingRef.current = true;
+      
+      fetchWhiteboard(id).then((whiteboard) => {
+        if (whiteboard?.data && editorRef.current) {
+          const data = whiteboard.data as { records?: unknown[]; version?: number };
+          
+          if (data.version === 2 && data.records && Array.isArray(data.records)) {
+            console.log("[Board] Loading", data.records.length, "saved records");
+            try {
+              // Put records directly into the store
+              editorRef.current.store.put(data.records as any[]);
+              toast.success("Board loaded!");
+            } catch (error) {
+              console.error("[Board] Error loading records:", error);
+            }
+          } else {
+            console.log("[Board] No compatible data found, starting fresh");
+          }
+        }
+        hasLoadedDataRef.current = true;
+        isLoadingRef.current = false;
+      }).catch((error) => {
+        console.error("[Board] Error loading board:", error);
+        hasLoadedDataRef.current = true;
+        isLoadingRef.current = false;
+      });
+    }
+
+    // Set up auto-save on changes
+    const unsubscribe = editor.store.listen(() => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+      saveTimeoutRef.current = setTimeout(() => {
+        if (hasLoadedDataRef.current && !isLoadingRef.current) {
+          saveToDatabase();
+        }
+      }, 3000);
+    }, { scope: "document" });
+
+    return () => {
+      unsubscribe();
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [id, saveToDatabase]);
+
+  // Handle title submit
+  const handleTitleSubmit = () => {
+    if (title.trim() && title !== board?.title) {
+      updateBoard(board!.id, { title: title.trim() });
+      toast.success("Board renamed");
+    }
+    setIsEditing(false);
+  };
+
+  // Insert template component
+  const insertTemplateComponent = useCallback((componentType: string, data?: Record<string, unknown>) => {
+    if (!editorRef.current) {
+      toast.error("Canvas not ready");
+      return;
+    }
+
+    console.log("[Board] Inserting component:", componentType, data);
+    
+    const editor = editorRef.current;
+    const center = editor.getViewportScreenCenter();
+    const textContent = (data?.label as string) || (data?.symbol as string) || componentType;
+    
+    // Create a geo shape with text
+    editor.createShape({
+      type: "geo",
+      x: center.x - 50,
+      y: center.y - 25,
+      props: {
+        w: 120,
+        h: 60,
+        geo: "rectangle",
+        text: textContent,
+      },
+    });
+
+    toast.success(`Added: ${textContent}`);
+  }, []);
+
+  // Not found state
   if (!board) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -269,91 +263,6 @@ export function Board() {
     );
   }
 
-  const handleTitleSubmit = () => {
-    if (title.trim() && title !== board.title) {
-      updateBoard(board.id, { title: title.trim() });
-      toast.success("Board renamed");
-    }
-    setIsEditing(false);
-  };
-
-  const handleShare = () => {
-    navigator.clipboard.writeText(window.location.href);
-    toast.success("Link copied to clipboard");
-  };
-
-  // Insert template-specific components (Excalidraw version)
-  const insertTemplateComponent = (componentType: string, data?: any) => {
-    const api = excalidrawAPIRef.current;
-    if (!api) {
-      toast.error("Canvas not ready yet");
-      return;
-    }
-
-    console.log("[Board] Inserting component:", componentType, data);
-
-    // Get text content from data
-    const textContent = data?.symbol || data?.label || componentType;
-    
-    // Create a unique ID
-    const elementId = `element-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    
-    // Get current scene to find center position
-    const appState = api.getAppState();
-    const centerX = appState.scrollX + appState.width / 2;
-    const centerY = appState.scrollY + appState.height / 2;
-
-    // Create a text element
-    const newElement = {
-      id: elementId,
-      type: "text",
-      x: centerX - 50,
-      y: centerY - 20,
-      width: 100,
-      height: 40,
-      angle: 0,
-      strokeColor: data?.color === "red" ? "#e03131" : 
-                   data?.color === "blue" ? "#1971c2" :
-                   data?.color === "green" ? "#2f9e44" :
-                   data?.color === "yellow" ? "#f08c00" : "#1e1e1e",
-      backgroundColor: "transparent",
-      fillStyle: "hachure",
-      strokeWidth: 1,
-      strokeStyle: "solid",
-      roughness: 1,
-      opacity: 100,
-      groupIds: [],
-      frameId: null,
-      roundness: null,
-      seed: Math.floor(Math.random() * 100000),
-      version: 1,
-      versionNonce: Math.floor(Math.random() * 100000),
-      isDeleted: false,
-      boundElements: null,
-      updated: Date.now(),
-      link: null,
-      locked: false,
-      text: textContent,
-      fontSize: 20,
-      fontFamily: 1,
-      textAlign: "center",
-      verticalAlign: "middle",
-      containerId: null,
-      originalText: textContent,
-      lineHeight: 1.25,
-    };
-
-    // Add the element to the scene
-    const currentElements = api.getSceneElements();
-    api.updateScene({
-      elements: [...currentElements, newElement],
-    });
-
-    toast.success(`Added: ${data?.label || componentType}`);
-  };
-
-
-
   return (
     <div className="min-h-screen flex flex-col bg-slate-100">
       {/* Board Header */}
@@ -361,10 +270,10 @@ export function Board() {
         <div className="flex items-center gap-3">
           <Button
             variant="ghost"
-            size="icon"
+            size="sm"
             onClick={() => navigate("/dashboard")}
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-4 h-4" />
           </Button>
 
           {isEditing ? (
@@ -446,7 +355,7 @@ export function Board() {
                     pageFormat !== "blank" && "invisible"
                   )}
                 />
-                Blank Page
+                Blank
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => setPageFormat("ruled")}
@@ -458,91 +367,54 @@ export function Board() {
                     pageFormat !== "ruled" && "invisible"
                   )}
                 />
-                Ruled Lines
+                Ruled
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Collaborate Button */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShareBoardModalOpen(true)}
-            className="gap-2"
-          >
-            <UserPlus className="w-4 h-4" />
-            <span className="hidden sm:inline">Collaborate</span>
-          </Button>
-
           {/* Collaborators */}
           {collaborators.length > 0 && (
-            <div className="hidden sm:flex items-center -space-x-2 mr-2">
+            <div className="flex -space-x-2">
               {collaborators.slice(0, 3).map((collab) => (
-                <Avatar key={collab.id} className="w-8 h-8 ring-2 ring-white">
-                  <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-xs font-semibold">
-                    {getInitials(
-                      collab.user_profile?.name || collab.email || "U"
-                    )}
+                <Avatar key={collab.id} className="w-8 h-8 border-2 border-white">
+                  <AvatarFallback className="text-xs bg-primary-100 text-primary-700">
+                    {getInitials((collab as any).profiles?.full_name || (collab as any).profiles?.email || "")}
                   </AvatarFallback>
                 </Avatar>
               ))}
               {collaborators.length > 3 && (
-                <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center text-xs font-medium ring-2 ring-white">
+                <div className="w-8 h-8 rounded-full bg-slate-200 border-2 border-white flex items-center justify-center text-xs font-medium text-slate-600">
                   +{collaborators.length - 3}
                 </div>
               )}
             </div>
           )}
 
+          {/* Share Button */}
           <Button
             variant="outline"
             size="sm"
-            onClick={handleShare}
-            className="gap-2"
+            onClick={() => setShareBoardModalOpen(true)}
           >
-            <Share className="w-4 h-4" />
             Share
           </Button>
 
+          {/* Export Button */}
           <Button
             variant="outline"
             size="sm"
             onClick={() => setExportModalOpen(true)}
-            className="gap-2"
           >
-            <Download className="w-4 h-4" />
             Export
           </Button>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <MoreHorizontal className="w-5 h-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setIsEditing(true)}>
-                Rename
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => toggleFavorite(board.id)}>
-                {board.isFavorite
-                  ? "Remove from favorites"
-                  : "Add to favorites"}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-red-600">
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </header>
 
-      {/* Canvas Area */}
+      {/* Main Content */}
       <main className="flex-1 relative bg-white overflow-hidden">
-        {/* Template Library Floating Button - below Page 1 tab */}
+        {/* Template Library Button */}
         {templateId && templateId !== "template-blank" && (
-          <div className="absolute top-12 left-4 z-20">
+          <div className="absolute top-4 left-4 z-20">
             <TemplateLibraryButton
               templateId={templateId}
               onInsertComponent={insertTemplateComponent}
@@ -550,45 +422,23 @@ export function Board() {
           </div>
         )}
 
-        {/* Page lines background (optional) */}
-        {pageFormat === "ruled" && (
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              backgroundImage: `linear-gradient(transparent 0px, transparent 31px, #e5e7eb 31px, #e5e7eb 32px),
-                             linear-gradient(90deg, #fca5a5 0px, #fca5a5 1px, transparent 1px)`,
-              backgroundSize: "100% 32px, 100% 32px",
-              backgroundPosition: "0 0, 60px 0",
-              zIndex: 1,
-            }}
-          />
-        )}
-
-        {/* Excalidraw canvas - must fill the container properly */}
-        <div
-          className="absolute inset-0"
-          style={{ height: "100%", width: "100%" }}
-        >
-          <Excalidraw
-            excalidrawAPI={(api) => { excalidrawAPIRef.current = api; }}
-            theme="light"
-            UIOptions={{
-              canvasActions: {
-                loadScene: false,
-              }
-            }}
+        {/* TLDraw Canvas */}
+        <div className="absolute inset-0" style={{ height: "100%", width: "100%" }}>
+          <Tldraw
+            key={id}
+            onMount={handleEditorMount}
+            licenseKey={TLDRAW_LICENSE_KEY || undefined}
           />
         </div>
       </main>
 
-      {/* Export Modal */}
+      {/* Modals */}
       <ExportModal
         open={exportModalOpen}
         onOpenChange={setExportModalOpen}
         boardTitle={board.title}
       />
 
-      {/* Team Collaborate Modal */}
       <TeamCollaborateModal
         open={shareBoardModalOpen}
         onOpenChange={setShareBoardModalOpen}
