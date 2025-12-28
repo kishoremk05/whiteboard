@@ -87,21 +87,36 @@ export function Board() {
       
       if (!isInternalTemplateId && board.title) {
         const titleLower = board.title.toLowerCase();
-        if (titleLower.includes("math") || titleLower.includes("equation")) {
+        // Math-related templates
+        if (titleLower.includes("math") || titleLower.includes("equation") || 
+            titleLower.includes("calculus") || titleLower.includes("derivative") ||
+            titleLower.includes("integral") || titleLower.includes("algebra") ||
+            titleLower.includes("quadratic") || titleLower.includes("trigonometry")) {
           detectedTemplateId = "template-math";
-        } else if (titleLower.includes("mind map")) {
+        } else if (titleLower.includes("physics") || titleLower.includes("chemistry") ||
+                   titleLower.includes("science") || titleLower.includes("biology")) {
+          detectedTemplateId = "template-math"; // Use math template for science too
+        } else if (titleLower.includes("mind map") || titleLower.includes("mindmap")) {
           detectedTemplateId = "template-mindmap";
         } else if (titleLower.includes("brainstorm")) {
           detectedTemplateId = "template-brainstorm";
-        } else if (titleLower.includes("kanban")) {
+        } else if (titleLower.includes("kanban") || titleLower.includes("task")) {
           detectedTemplateId = "template-kanban";
-        } else if (titleLower.includes("flowchart")) {
+        } else if (titleLower.includes("flowchart") || titleLower.includes("flow chart") ||
+                   titleLower.includes("diagram") || titleLower.includes("process")) {
           detectedTemplateId = "template-flowchart";
+        } else if (titleLower.includes("wireframe") || titleLower.includes("ui") ||
+                   titleLower.includes("design") || titleLower.includes("mockup")) {
+          detectedTemplateId = "template-wireframe";
+        } else if (titleLower.includes("timeline") || titleLower.includes("roadmap")) {
+          detectedTemplateId = "template-timeline";
+        } else if (titleLower.includes("org chart") || titleLower.includes("organization")) {
+          detectedTemplateId = "template-org-chart";
         }
       }
       
       if (detectedTemplateId) {
-        console.log("[Board] Detected template:", detectedTemplateId);
+        console.log("[Board] Detected template:", detectedTemplateId, "from title:", board.title);
         setTemplateId(detectedTemplateId);
       }
       
@@ -123,7 +138,7 @@ export function Board() {
       const saveData = {
         records: allRecords,
         savedAt: new Date().toISOString(),
-        version: 2,
+        version: 3,  // Version 3 = TLDraw v2 compatible format
       };
 
       console.log("[Board] Saving", allRecords.length, "records to database");
@@ -163,17 +178,20 @@ export function Board() {
         if (whiteboard?.data && editorRef.current) {
           const data = whiteboard.data as { records?: unknown[]; version?: number };
           
-          if (data.version === 2 && data.records && Array.isArray(data.records)) {
-            console.log("[Board] Loading", data.records.length, "saved records");
+          // Only load version 3 data (new format without text on geo shapes)
+          // Older data (version 1, 2) may have incompatible shape properties
+          if (data.version === 3 && data.records && Array.isArray(data.records)) {
+            console.log("[Board] Loading", data.records.length, "saved records (v3)");
             try {
-              // Put records directly into the store
               editorRef.current.store.put(data.records as any[]);
               toast.success("Board loaded!");
             } catch (error) {
-              console.error("[Board] Error loading records:", error);
+              console.warn("[Board] Could not load saved data, starting fresh:", error);
+              // Start fresh without crashing
             }
           } else {
-            console.log("[Board] No compatible data found, starting fresh");
+            // Old format - start fresh (don't try to load incompatible data)
+            console.log("[Board] Old data format (v" + (data.version || 1) + "), starting fresh");
           }
         }
         hasLoadedDataRef.current = true;
@@ -214,7 +232,7 @@ export function Board() {
     setIsEditing(false);
   };
 
-  // Insert template component
+  // Insert template component - using TLDraw v2 text shape with richText
   const insertTemplateComponent = useCallback((componentType: string, data?: Record<string, unknown>) => {
     if (!editorRef.current) {
       toast.error("Canvas not ready");
@@ -227,20 +245,55 @@ export function Board() {
     const center = editor.getViewportScreenCenter();
     const textContent = (data?.label as string) || (data?.symbol as string) || componentType;
     
-    // Create a geo shape with text
-    editor.createShape({
-      type: "geo",
-      x: center.x - 50,
-      y: center.y - 25,
-      props: {
-        w: 120,
-        h: 60,
-        geo: "rectangle",
-        text: textContent,
-      },
-    });
+    try {
+      // TLDraw v2 text shapes require richText as a JSON structure
+      // Format: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "..." }] }] }
+      const richTextContent = {
+        type: "doc",
+        content: [
+          {
+            type: "paragraph",
+            content: [
+              { type: "text", text: textContent }
+            ]
+          }
+        ]
+      };
 
-    toast.success(`Added: ${textContent}`);
+      // Create a text shape with richText
+      editor.createShape({
+        type: "text",
+        x: center.x - 80,
+        y: center.y - 20,
+        props: {
+          color: "black",
+          size: "l",
+          font: "draw",
+          textAlign: "middle",
+          w: 200,
+          richText: richTextContent,
+          scale: 1,
+          autoSize: true,
+        },
+      });
+      
+      toast.success(`Added: ${textContent}`);
+    } catch (error) {
+      console.error("[Board] Error creating text shape:", error);
+      // Fallback - create rectangle and copy to clipboard
+      try {
+        editor.createShape({
+          type: "geo",
+          x: center.x - 80,
+          y: center.y - 40,
+          props: { w: 160, h: 80, geo: "rectangle" },
+        });
+        navigator.clipboard.writeText(textContent).catch(() => {});
+      } catch {
+        // Ignore fallback errors
+      }
+      toast.info(`Press T then type: ${textContent}`, { duration: 5000 });
+    }
   }, []);
 
   // Not found state
