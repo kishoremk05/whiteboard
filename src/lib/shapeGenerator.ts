@@ -1,5 +1,21 @@
 import { Editor } from "tldraw";
 
+// Valid TLDraw colors
+type TLDrawColor =
+    | "black"
+    | "grey"
+    | "light-violet"
+    | "violet"
+    | "blue"
+    | "light-blue"
+    | "yellow"
+    | "orange"
+    | "green"
+    | "light-green"
+    | "light-red"
+    | "red"
+    | "white";
+
 // Shape types that AI can generate
 interface ShapeCommand {
     type: "rectangle" | "ellipse" | "line" | "arrow" | "text";
@@ -11,6 +27,39 @@ interface ShapeCommand {
     color?: string;
     endX?: number;
     endY?: number;
+}
+
+// Validate and map colors to TLDraw's valid color set
+function validateColor(color: string | undefined): TLDrawColor {
+    if (!color) return "black";
+
+    const lowerColor = color.toLowerCase();
+
+    // Direct matches
+    const validColors: TLDrawColor[] = [
+        "black", "grey", "light-violet", "violet", "blue", "light-blue",
+        "yellow", "orange", "green", "light-green", "light-red", "red", "white"
+    ];
+
+    if (validColors.includes(lowerColor as TLDrawColor)) {
+        return lowerColor as TLDrawColor;
+    }
+
+    // Color mapping for common invalid colors
+    const colorMap: Record<string, TLDrawColor> = {
+        "brown": "orange",
+        "purple": "violet",
+        "pink": "light-red",
+        "cyan": "light-blue",
+        "lime": "light-green",
+        "gray": "grey",
+        "darkgray": "grey",
+        "lightgray": "grey",
+        "darkgrey": "grey",
+        "lightgrey": "grey",
+    };
+
+    return colorMap[lowerColor] || "black";
 }
 
 // Parse AI response to extract shape commands
@@ -62,7 +111,7 @@ export function parseShapeCommands(aiResponse: string): ShapeCommand[] {
             width: s.width || 100,
             height: s.height || 100,
             text: s.text || "",
-            color: s.color || "black",
+            color: validateColor(s.color),
             endX: s.endX,
             endY: s.endY,
         }));
@@ -104,7 +153,7 @@ export function insertShapesOnCanvas(
                             w: shape.width || 100,
                             h: shape.height || 80,
                             geo: "rectangle",
-                            color: shape.color || "black",
+                            color: validateColor(shape.color),
                         },
                     });
                     insertedCount++;
@@ -119,7 +168,7 @@ export function insertShapesOnCanvas(
                             w: shape.width || 80,
                             h: shape.height || 80,
                             geo: "ellipse",
-                            color: shape.color || "black",
+                            color: validateColor(shape.color),
                         },
                     });
                     insertedCount++;
@@ -137,7 +186,7 @@ export function insertShapesOnCanvas(
                             y,
                             props: {
                                 richText,
-                                color: shape.color || "black",
+                                color: validateColor(shape.color),
                                 size: "m",
                                 font: "draw",
                                 textAlign: "middle",
@@ -158,7 +207,7 @@ export function insertShapesOnCanvas(
                         props: {
                             start: { x: 0, y: 0 },
                             end: { x: shape.endX || shape.width || 100, y: shape.endY || 0 },
-                            color: shape.color || "black",
+                            color: validateColor(shape.color),
                             arrowheadEnd: shape.type === "arrow" ? "arrow" : "none",
                         },
                     });
@@ -186,7 +235,7 @@ Return ONLY a JSON array of shape commands. Available shapes:
 - line: {type: "line", x, y, endX, endY, color}
 
 Use coordinates relative to center (0,0). Keep it simple with basic shapes.
-Colors: "black", "blue", "red", "green", "orange", "violet"
+Valid colors ONLY: "black", "grey", "violet", "light-violet", "blue", "light-blue", "yellow", "orange", "green", "light-green", "red", "light-red", "white"
 
 Example for "draw a house":
 \`\`\`json
@@ -213,7 +262,7 @@ Return ONLY a JSON array of shape commands to recreate this image. Available sha
 - line: {type: "line", x, y, endX, endY, color}
 
 Use coordinates relative to center (0,0). Approximate the image with basic geometric shapes.
-Colors: "black", "blue", "red", "green", "orange", "violet"
+Valid colors ONLY: "black", "grey", "violet", "light-violet", "blue", "light-blue", "yellow", "orange", "green", "light-green", "red", "light-red", "white"
 
 Return ONLY the JSON array, no other text.`;
 }

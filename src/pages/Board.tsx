@@ -197,7 +197,43 @@ export function Board() {
           if (data.version === 3 && data.records && Array.isArray(data.records)) {
             console.log("[Board] Loading", data.records.length, "saved records (v3)");
             try {
-              editorRef.current.store.put(data.records as any[]);
+              // Sanitize records to fix invalid colors
+              const sanitizedRecords = data.records.map((record: any) => {
+                // Only process shape records that have props with color
+                if (record?.props?.color) {
+                  const validColors = [
+                    "black", "grey", "light-violet", "violet", "blue", "light-blue",
+                    "yellow", "orange", "green", "light-green", "light-red", "red", "white"
+                  ];
+                  
+                  const colorMap: Record<string, string> = {
+                    "brown": "orange",
+                    "purple": "violet",
+                    "pink": "light-red",
+                    "cyan": "light-blue",
+                    "lime": "light-green",
+                    "gray": "grey",
+                  };
+                  
+                  const currentColor = String(record.props.color).toLowerCase();
+                  
+                  // Fix invalid color
+                  if (!validColors.includes(currentColor)) {
+                    const fixedColor = colorMap[currentColor] || "black";
+                    console.log(`[Board] Fixed invalid color "${record.props.color}" -> "${fixedColor}" in ${record.typeName}`);
+                    return {
+                      ...record,
+                      props: {
+                        ...record.props,
+                        color: fixedColor
+                      }
+                    };
+                  }
+                }
+                return record;
+              });
+              
+              editorRef.current.store.put(sanitizedRecords as any[]);
               toast.success("Board loaded!");
             } catch (error) {
               console.warn("[Board] Could not load saved data, starting fresh:", error);
