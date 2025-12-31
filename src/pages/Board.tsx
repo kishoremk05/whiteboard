@@ -6,6 +6,7 @@ import {
   Check,
   FileText,
   Users,
+  Settings,
 } from "lucide-react";
 import { Tldraw, Editor } from "tldraw";
 import "tldraw/tldraw.css";
@@ -23,6 +24,7 @@ import { TemplateLibraryButton } from "../components/board/TemplateLibraryButton
 import { AIAssistanceToggle, type AIMode } from "../components/board/AIAssistanceToggle";
 import { AIResponsePanel } from "../components/board/AIResponsePanel";
 import { AIGeneratePanel } from "../components/board/AIGeneratePanel";
+import { AISettingsModal } from "../components/board/AISettingsModal";
 import { Avatar, AvatarFallback } from "../components/ui/avatar";
 import { useBoards } from "../contexts/BoardContext";
 import {
@@ -61,6 +63,7 @@ export function Board() {
   const [aiError, setAIError] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   // TLDraw refs
   const editorRef = useRef<Editor | null>(null);
@@ -537,7 +540,7 @@ export function Board() {
         )}
 
         {/* AI Assistance Toggle */}
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20">
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
           <AIAssistanceToggle
             mode={aiMode}
             onModeChange={setAIMode}
@@ -552,6 +555,13 @@ export function Board() {
             }}
             isAnalyzing={isAnalyzing}
           />
+          <button
+            onClick={() => setSettingsOpen(true)}
+            className="p-2 bg-white rounded-lg border shadow-sm hover:bg-slate-50 transition-colors"
+            title="AI Settings"
+          >
+            <Settings className="w-4 h-4 text-slate-600" />
+          </button>
         </div>
 
         {/* AI Response Panel - only for analysis modes */}
@@ -650,6 +660,11 @@ export function Board() {
         onOpenChange={setShareBoardModalOpen}
         boardId={board.id}
         boardTitle={board.title}
+      />
+
+      <AISettingsModal
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
       />
     </div>
   );

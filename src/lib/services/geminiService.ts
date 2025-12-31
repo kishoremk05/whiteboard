@@ -1,8 +1,23 @@
 import { type AIMode } from "../../components/board/AIAssistanceToggle";
 
-const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY || "";
-// Using LLaMA 3.2 Vision model for image analysis
-const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
+import { getUserApiKey } from "../services/apiKeyService";
+
+// Get API key from Supabase (user's key), localStorage, or environment variable (default)
+async function getApiKey(): Promise<string> {
+    // Try Supabase first
+    const supabaseKey = await getUserApiKey();
+    if (supabaseKey) return supabaseKey;
+
+    // Fallback to localStorage
+    const localKey = localStorage.getItem("gemini_api_key");
+    if (localKey) return localKey;
+
+    // Final fallback to env variable
+    return import.meta.env.VITE_GEMINI_API_KEY || "";
+}
+
+const GEMINI_TEXT_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent";
+const GEMINI_VISION_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent";
 
 // Mode-specific system prompts
 const MODE_PROMPTS: Record<Exclude<AIMode, "off" | "generate">, string> = {
@@ -54,47 +69,44 @@ export async function analyzeCanvas(
     imageBase64: string,
     mode: Exclude<AIMode, "off" | "generate">
 ): Promise<AIResponse> {
-    if (!GROQ_API_KEY) {
+    const apiKey = await getApiKey();
+    if (!apiKey) {
         return {
             success: false,
-            error: "Groq API key not configured. Please add VITE_GROQ_API_KEY to your .env.local file.",
+            error: "Gemini API key not configured. Please add your API key in Settings.",
         };
     }
 
     try {
-        const response = await fetch(GROQ_API_URL, {
+        const response = await fetch(`${GEMINI_VISION_URL}?key=${apiKey}`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "Authorization": `Bearer ${GROQ_API_KEY}`,
             },
             body: JSON.stringify({
-                model: "meta-llama/llama-4-scout-17b-16e-instruct",
-                messages: [
-                    {
-                        role: "user",
-                        content: [
-                            {
-                                type: "text",
-                                text: MODE_PROMPTS[mode] + "\n\nAnalyze this whiteboard image:",
-                            },
-                            {
-                                type: "image_url",
-                                image_url: {
-                                    url: `data:image/png;base64,${imageBase64}`,
-                                },
-                            },
-                        ],
-                    },
-                ],
-                max_tokens: 1024,
-                temperature: 0.7,
+                contents: [{
+                    parts: [
+                        {
+                            text: MODE_PROMPTS[mode] + "\n\nAnalyze this whiteboard image:"
+                        },
+                        {
+                            inline_data: {
+                                mime_type: "image/png",
+                                data: imageBase64
+                            }
+                        }
+                    ]
+                }],
+                generationConfig: {
+                    temperature: 0.7,
+                    maxOutputTokens: 1024,
+                }
             }),
         });
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
-            console.error("[Groq] API Error:", errorData);
+            console.error("[Gemini] API Error:", errorData);
             return {
                 success: false,
                 error: `API Error: ${response.status} - ${errorData?.error?.message || "Unknown error"}`,
@@ -102,7 +114,7 @@ export async function analyzeCanvas(
         }
 
         const data = await response.json();
-        const content = data?.choices?.[0]?.message?.content;
+        const content = data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
         if (!content) {
             return {
@@ -116,25 +128,26 @@ export async function analyzeCanvas(
             content,
         };
     } catch (error) {
-        console.error("[Groq] Request failed:", error);
+        console.error("[Gemini] Request failed:", error);
         return {
             success: false,
-            error: error instanceof Error ? error.message : "Failed to connect to Groq API",
+            error: error instanceof Error ? error.message : "Failed to connect to Gemini API",
         };
     }
 }
 
-// Check if Groq is configured
+// Check if Gemini is configured
 export function isGeminiConfigured(): boolean {
-    return Boolean(GROQ_API_KEY);
+    return Boolean(getApiKey());
 }
 
 // Generate shapes from text prompt
 export async function generateFromText(prompt: string): Promise<AIResponse> {
-    if (!GROQ_API_KEY) {
+    const apiKey = await getApiKey();
+    if (!apiKey) {
         return {
             success: false,
-            error: "Groq API key not configured.",
+            error: "Gemini API key not configured.",
         };
     }
 
@@ -153,20 +166,21 @@ Colors: "black", "blue", "red", "green", "orange", "violet"
 Return ONLY the JSON array, no explanation.`;
 
     try {
-        const response = await fetch(GROQ_API_URL, {
+        const response = await fetch(`${GEMINI_TEXT_URL}?key=${apiKey}`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "Authorization": `Bearer ${GROQ_API_KEY}`,
             },
             body: JSON.stringify({
-                model: "llama-3.3-70b-versatile",
-                messages: [
-                    { role: "system", content: systemPrompt },
-                    { role: "user", content: `Draw: ${prompt}` },
-                ],
-                max_tokens: 1024,
-                temperature: 0.7,
+                contents: [{
+                    parts: [{
+                        text: systemPrompt + `\n\nDraw: ${prompt}`
+                    }]
+                }],
+                generationConfig: {
+                    temperature: 0.7,
+                    maxOutputTokens: 1024,
+                }
             }),
         });
 
@@ -179,7 +193,7 @@ Return ONLY the JSON array, no explanation.`;
         }
 
         const data = await response.json();
-        const content = data?.choices?.[0]?.message?.content;
+        const content = data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
         return content ? { success: true, content } : { success: false, error: "No response generated" };
     } catch (error) {
@@ -192,10 +206,11 @@ Return ONLY the JSON array, no explanation.`;
 
 // Generate shapes from image (recreate image as shapes)
 export async function generateFromImage(imageBase64: string): Promise<AIResponse> {
-    if (!GROQ_API_KEY) {
+    const apiKey = await getApiKey();
+    if (!apiKey) {
         return {
             success: false,
-            error: "Groq API key not configured.",
+            error: "Gemini API key not configured.",
         };
     }
 
@@ -214,25 +229,22 @@ Colors: "black", "blue", "red", "green", "orange", "violet"
 Return ONLY the JSON array.`;
 
     try {
-        const response = await fetch(GROQ_API_URL, {
+        const response = await fetch(`${GEMINI_VISION_URL}?key=${apiKey}`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "Authorization": `Bearer ${GROQ_API_KEY}`,
             },
             body: JSON.stringify({
-                model: "meta-llama/llama-4-scout-17b-16e-instruct",
-                messages: [
-                    {
-                        role: "user",
-                        content: [
-                            { type: "text", text: prompt },
-                            { type: "image_url", image_url: { url: `data:image/png;base64,${imageBase64}` } },
-                        ],
-                    },
-                ],
-                max_tokens: 1024,
-                temperature: 0.5,
+                contents: [{
+                    parts: [
+                        { text: prompt },
+                        { inline_data: { mime_type: "image/png", data: imageBase64 } }
+                    ]
+                }],
+                generationConfig: {
+                    temperature: 0.5,
+                    maxOutputTokens: 1024,
+                }
             }),
         });
 
@@ -245,7 +257,7 @@ Return ONLY the JSON array.`;
         }
 
         const data = await response.json();
-        const content = data?.choices?.[0]?.message?.content;
+        const content = data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
         return content ? { success: true, content } : { success: false, error: "No response generated" };
     } catch (error) {

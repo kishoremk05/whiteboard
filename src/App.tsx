@@ -172,7 +172,7 @@ function App() {
               <AppRoutes />
               <GlobalCommandPalette />
               <Toaster
-                position="bottom-right"
+                position="top-center"
                 toastOptions={{
                   style: {
                     background: 'white',
