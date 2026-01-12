@@ -1,40 +1,51 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
     LayoutGrid,
-    Star,
-    Trash2,
+    Zap,
     Settings,
-    Users,
-    X,
+    ChevronDown,
+    Palette,
 } from 'lucide-react';
-import { ScrollArea } from '../ui/scroll-area';
-import { Separator } from '../ui/separator';
-import { Badge } from '../ui/badge';
-import { OrgSwitcher } from './OrgSwitcher';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { Button } from '../ui/button';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '../ui/dropdown-menu';
 
-import { cn } from '../../lib/utils';
+import { cn, getInitials } from '../../lib/utils';
 import { useBoards } from '../../contexts/BoardContext';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface SidebarProps {
     isOpen: boolean;
     onClose: () => void;
 }
 
-const mainNavItems = [
-    { name: 'All Boards', href: '/dashboard', icon: LayoutGrid },
-    { name: 'Favorites', href: '/dashboard/favorites', icon: Star },
-    { name: 'Trash', href: '/dashboard/trash', icon: Trash2 },
-];
-
-const bottomNavItems = [
-    { name: 'Team', href: '/dashboard/team', icon: Users },
-    { name: 'Settings', href: '/dashboard/settings', icon: Settings },
-];
-
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
     const location = useLocation();
-    const { boards } = useBoards();
+    const navigate = useNavigate();
+    const { boards, createBoard } = useBoards();
+    const { user, logout } = useAuth();
 
+    // Get recent boards (last 2)
+    const recentBoards = [...boards]
+        .filter(b => !b.isDeleted)
+        .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+        .slice(0, 2);
+
+    const handleNewBoard = async () => {
+        const board = await createBoard('Untitled Board');
+        navigate(`/board/${board.id}`);
+    };
+
+    const handleLogout = async () => {
+        await logout();
+        navigate('/');
+    };
 
     return (
         <>
@@ -50,102 +61,131 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             <aside
                 className={cn(
                     'fixed top-0 left-0 z-50 h-full w-64 bg-white border-r border-slate-200 transition-transform duration-300',
-                    isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0 lg:hidden'
+                    isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
                 )}
             >
                 <div className="flex flex-col h-full">
-                    {/* Header */}
-                    <div className="flex items-center justify-between p-4 border-b border-slate-100">
-                        <Link to="/" className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-lg bg-gray-900 flex items-center justify-center">
-                                <svg
-                                    className="w-4 h-4 text-white"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2.5"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                >
-                                    <path d="M12 19l7-7 3 3-7 7-3-3z" />
-                                    <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z" />
-                                </svg>
+                    {/* User Profile Section */}
+                    <div className="p-4">
+                        <div className="flex items-center gap-3 mb-1">
+                            <Avatar className="w-10 h-10 ring-2 ring-slate-100">
+                                <AvatarImage src={user?.avatar} alt={user?.name} />
+                                <AvatarFallback className="bg-gray-900 text-white font-semibold">
+                                    {user?.name ? getInitials(user.name) : 'U'}
+                                </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                                <h2 className="text-sm font-semibold text-slate-900">
+                                    Hey, {user?.name?.split(' ')[0] || 'User'}
+                                </h2>
+                                <p className="text-xs text-slate-500">Ready to whiteboard?</p>
                             </div>
-                            <span className="text-lg font-bold text-slate-900">
-                                Canvas<span className="text-gray-400">AI</span>
-                            </span>
-                        </Link>
-                        <button
-                            onClick={onClose}
-                            className="lg:hidden p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+                        </div>
+                    </div>
+
+                    {/* New Whiteboard Button */}
+                    <div className="px-4 pb-3">
+                        <Button
+                            onClick={handleNewBoard}
+                            className="w-full bg-gray-900 hover:bg-gray-800 text-white gap-2 justify-start"
                         >
-                            <X className="w-5 h-5 text-slate-500" />
-                        </button>
+                            <Zap className="w-4 h-4" />
+                            New Whiteboard
+                        </Button>
                     </div>
 
-                    {/* Organization Switcher */}
-                    <div className="p-3">
-                        <OrgSwitcher />
+                    {/* All Boards */}
+                    <div className="px-4 pb-2">
+                        <Link
+                            to="/dashboard"
+                            className={cn(
+                                'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                                location.pathname === '/dashboard'
+                                    ? 'bg-gray-900 text-white'
+                                    : 'text-slate-600 hover:bg-slate-100'
+                            )}
+                        >
+                            <LayoutGrid className="w-4 h-4" />
+                            All Boards
+                        </Link>
                     </div>
 
-                    <Separator />
+                    {/* Recent Boards */}
+                    <div className="px-4 pb-3">
+                        <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 px-3">
+                            Recent Boards
+                        </h3>
+                        <div className="space-y-1">
+                            {recentBoards.map((board) => (
+                                <Link
+                                    key={board.id}
+                                    to={`/board/${board.id}`}
+                                    className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-100 transition-colors group"
+                                >
+                                    <div className="w-4 h-4 flex items-center justify-center">
+                                        <Palette className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600" />
+                                    </div>
+                                    <span className="truncate">{board.title}</span>
+                                </Link>
+                            ))}
+                            {recentBoards.length === 0 && (
+                                <p className="text-xs text-slate-400 px-3 py-2">No recent boards</p>
+                            )}
+                        </div>
+                    </div>
 
-                    {/* Main Navigation */}
-                    <ScrollArea className="flex-1 px-3 py-4">
-                        <nav className="space-y-1">
-                            {mainNavItems.map((item) => {
-                                const isActive = location.pathname === item.href;
-                                return (
-                                    <Link
-                                        key={item.name}
-                                        to={item.href}
-                                        className={cn(
-                                            'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
-                                            isActive
-                                                ? 'bg-slate-100 text-slate-900'
-                                                : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                                        )}
-                                    >
-                                        <item.icon className="w-5 h-5" />
-                                        {item.name}
-                                        {item.name === 'Favorites' && (
-                                            <Badge variant="secondary" className="ml-auto text-xs">
-                                                {boards.filter(b => b.isFavorite).length}
-                                            </Badge>
-                                        )}
-                                    </Link>
-                                );
-                            })}
-                        </nav>
-
-                    </ScrollArea>
+                    <div className="flex-1" />
 
                     {/* Bottom Navigation */}
-                    <div className="p-3 border-t border-slate-100">
-                        <nav className="space-y-1">
-                            {bottomNavItems.map((item) => {
-                                const isActive = location.pathname === item.href;
-                                return (
-                                    <Link
-                                        key={item.name}
-                                        to={item.href}
-                                        className={cn(
-                                            'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
-                                            isActive
-                                                ? 'bg-slate-100 text-slate-900'
-                                                : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                                        )}
-                                    >
-                                        <item.icon className="w-5 h-5" />
-                                        {item.name}
-                                    </Link>
-                                );
-                            })}
-                        </nav>
+                    <div className="p-4 border-t border-slate-100">
+                        <Link
+                            to="/dashboard/settings"
+                            className={cn(
+                                'flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors',
+                                location.pathname === '/dashboard/settings'
+                                    ? 'bg-slate-100 text-slate-900'
+                                    : 'text-slate-600 hover:bg-slate-100'
+                            )}
+                        >
+                            <Settings className="w-4 h-4" />
+                            Settings
+                        </Link>
+                    </div>
+
+                    {/* User Profile Dropdown */}
+                    <div className="p-4 border-t border-slate-100">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-100 transition-colors">
+                                    <Avatar className="w-8 h-8">
+                                        <AvatarImage src={user?.avatar} alt={user?.name} />
+                                        <AvatarFallback className="bg-gray-900 text-white text-xs font-semibold">
+                                            {user?.name ? getInitials(user.name) : 'U'}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex-1 text-left min-w-0">
+                                        <p className="text-sm font-medium text-slate-900 truncate">
+                                            {user?.name || 'User'}
+                                        </p>
+                                        <p className="text-xs text-slate-500">Creator</p>
+                                    </div>
+                                    <ChevronDown className="w-4 h-4 text-slate-400" />
+                                </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-56">
+                                <DropdownMenuItem onClick={() => navigate('/dashboard/settings')}>
+                                    <Settings className="w-4 h-4 mr-2" />
+                                    Settings
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={handleLogout} className="text-red-600">
+                                    Log out
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
                 </div>
             </aside>
-
         </>
     );
 }

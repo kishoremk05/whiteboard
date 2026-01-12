@@ -21,7 +21,10 @@ export function DashboardLayout({
   return (
     <div className="min-h-screen bg-white">
       {/* Sidebar */}
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <Sidebar 
+        isOpen={sidebarOpen} 
+        onClose={() => setSidebarOpen(false)}
+      />
 
       {/* Main Content */}
       <div

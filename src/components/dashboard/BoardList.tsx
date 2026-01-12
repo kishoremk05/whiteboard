@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { LayoutGrid, List, SortAsc, Check, ArrowUp } from "lucide-react";
+import { LayoutGrid, List, SortAsc, Check, ArrowUp, Plus } from "lucide-react";
 import type { Board } from "../../types";
 import { BoardCard } from "./BoardCard";
 import { BoardCardSkeleton } from "./BoardCardSkeleton";
@@ -21,6 +21,8 @@ interface BoardListProps {
   emptyTitle?: string;
   emptyDescription?: string;
   emptyIcon?: React.ReactNode;
+  showNewBoardCard?: boolean;
+  onNewBoard?: () => void;
 }
 
 type SortOption = "updated" | "created" | "name";
@@ -34,6 +36,8 @@ export function BoardList({
   emptyTitle = "No boards yet",
   emptyDescription = "Create your first board to get started.",
   emptyIcon,
+  showNewBoardCard = false,
+  onNewBoard,
 }: BoardListProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [sortBy, setSortBy] = useState<SortOption>("updated");
@@ -295,6 +299,30 @@ export function BoardList({
             : "space-y-3"
         )}
       >
+        {/* New Board Card */}
+        {showNewBoardCard && viewMode === "grid" && (
+          <button
+            onClick={onNewBoard}
+            className="group bg-white rounded-xl border border-slate-200 overflow-hidden hover:border-slate-300 hover:shadow-lg transition-all cursor-pointer text-left"
+          >
+            {/* Thumbnail area with dashed border */}
+            <div className="relative aspect-[4/3] bg-slate-50">
+              <div className="absolute inset-2 border-2 border-dashed border-slate-300 rounded-lg flex flex-col items-center justify-center gap-2">
+                <div className="w-10 h-10 rounded-lg bg-slate-200 group-hover:bg-slate-300 flex items-center justify-center transition-colors">
+                  <Plus className="w-5 h-5 text-slate-600" />
+                </div>
+                <span className="text-sm font-medium text-slate-600">New Board</span>
+              </div>
+            </div>
+            
+            {/* Info section to match other cards */}
+            <div className="p-4">
+              <h3 className="font-medium text-slate-900 truncate mb-1">Create new board</h3>
+              <p className="text-sm text-slate-500">Start with a blank canvas</p>
+            </div>
+          </button>
+        )}
+        
         {displayedBoards.map((board, index) => (
           <div
             key={board.id}

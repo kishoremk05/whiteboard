@@ -1,12 +1,15 @@
 import { type AIMode } from "../../components/board/AIAssistanceToggle";
-
 import { getUserApiKey } from "../services/apiKeyService";
 
 // Get API key from Supabase (user's key), localStorage, or environment variable (default)
 async function getApiKey(): Promise<string> {
     // Try Supabase first
-    const supabaseKey = await getUserApiKey();
-    if (supabaseKey) return supabaseKey;
+    try {
+        const supabaseKey = await getUserApiKey();
+        if (supabaseKey) return supabaseKey;
+    } catch (e) {
+        // Supabase fetch failed, continue to fallbacks
+    }
 
     // Fallback to localStorage
     const localKey = localStorage.getItem("gemini_api_key");
@@ -138,7 +141,12 @@ export async function analyzeCanvas(
 
 // Check if Gemini is configured
 export function isGeminiConfigured(): boolean {
-    return Boolean(getApiKey());
+    // Check localStorage first for immediate result
+    const localKey = localStorage.getItem("gemini_api_key");
+    if (localKey) return true;
+
+    // Check env variable
+    return Boolean(import.meta.env.VITE_GEMINI_API_KEY);
 }
 
 // Generate shapes from text prompt
