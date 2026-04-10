@@ -1,105 +1,69 @@
-import { supabase } from '../supabase';
-import type { DbTemplate, WhiteboardInsert } from '../../types/database.types';
-import { createWhiteboard } from './whiteboardService';
+import { templates } from "../../data/mockData";
+import type { DbTemplate, WhiteboardInsert } from "../../types/database.types";
+import { createWhiteboard } from "./whiteboardService";
 
-/**
- * Template Service
- * Fetch templates and create boards from templates
- */
+const toDbTemplate = (template: {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  thumbnail: string;
+}): DbTemplate => ({
+  id: template.id,
+  name: template.name,
+  description: template.description,
+  category: template.category,
+  preview: template.thumbnail,
+  data: {},
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+});
 
-/**
- * Fetch all templates
- */
 export async function fetchTemplates(): Promise<DbTemplate[]> {
-    const { data, error } = await supabase
-        .from('templates')
-        .select('*')
-        .order('name', { ascending: true });
-
-    if (error) throw error;
-    return data || [];
+  return templates.map(toDbTemplate);
 }
 
-/**
- * Fetch templates by category
- */
-export async function fetchTemplatesByCategory(category: string): Promise<DbTemplate[]> {
-    const { data, error } = await supabase
-        .from('templates')
-        .select('*')
-        .eq('category', category)
-        .order('name', { ascending: true });
-
-    if (error) throw error;
-    return data || [];
+export async function fetchTemplatesByCategory(
+  category: string,
+): Promise<DbTemplate[]> {
+  return templates.filter((t) => t.category === category).map(toDbTemplate);
 }
 
-/**
- * Fetch a single template by ID
- */
 export async function fetchTemplate(id: string): Promise<DbTemplate | null> {
-    const { data, error } = await supabase
-        .from('templates')
-        .select('*')
-        .eq('id', id)
-        .single();
-
-    if (error) {
-        if (error.code === 'PGRST116') return null;
-        throw error;
-    }
-    return data;
+  const template = templates.find((t) => t.id === id);
+  return template ? toDbTemplate(template) : null;
 }
 
-/**
- * Get unique template categories
- */
 export async function getTemplateCategories(): Promise<string[]> {
-    const { data, error } = await supabase
-        .from('templates')
-        .select('category')
-        .not('category', 'is', null);
-
-    if (error) throw error;
-
-    const categories = [...new Set((data || []).map((t: { category: string | null }) => t.category).filter(Boolean))] as string[];
-    return categories.sort();
+  return [...new Set(templates.map((t) => t.category))].sort();
 }
 
-/**
- * Create a whiteboard from a template
- */
 export async function createFromTemplate(
-    templateId: string,
-    userId: string,
-    title?: string
+  templateId: string,
+  userId: string,
+  title?: string,
 ): Promise<Awaited<ReturnType<typeof createWhiteboard>>> {
-    // Fetch the template
-    const template = await fetchTemplate(templateId);
-    if (!template) throw new Error('Template not found');
+  const template = await fetchTemplate(templateId);
+  if (!template) throw new Error("Template not found");
 
-    // Create whiteboard with template data
-    const whiteboard: WhiteboardInsert = {
-        title: title || template.name || 'Untitled Board',
-        data: template.data,
-        preview: template.preview,
-        user_id: userId,
-        folder_id: null,
-    };
+  const whiteboard: WhiteboardInsert = {
+    title: title || template.name || "Untitled Board",
+    data: template.data,
+    preview: template.preview,
+    user_id: userId,
+    folder_id: null,
+  };
 
-    return createWhiteboard(whiteboard);
+  return createWhiteboard(whiteboard);
 }
 
-/**
- * Search templates by name or description
- */
 export async function searchTemplates(query: string): Promise<DbTemplate[]> {
-    const { data, error } = await supabase
-        .from('templates')
-        .select('*')
-        .or(`name.ilike.%${query}%,description.ilike.%${query}%`)
-        .order('name', { ascending: true });
-
-    if (error) throw error;
-    return data || [];
+  const lower = query.toLowerCase();
+  return templates
+    .filter(
+      (t) =>
+        t.name.toLowerCase().includes(lower) ||
+        t.description.toLowerCase().includes(lower),
+    )
+    .map(toDbTemplate);
 }

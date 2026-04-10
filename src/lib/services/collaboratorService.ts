@@ -1,15 +1,5 @@
 import type { CollaboratorRecord } from '../../types/database.types';
 
-// Mock types
-interface CollaboratorRecord {
-  id: string;
-  whiteboard_id: string;
-  user_id: string;
-  role: 'editor' | 'viewer' | 'admin';
-  created_at: string;
-  updated_at: string;
-}
-
 /**
  * Collaborator Service
  * Manage board sharing and collaboration
@@ -36,7 +26,7 @@ export async function fetchCollaborators(_whiteboardId: string): Promise<Collabo
  */
 export async function addCollaborator(
     whiteboardId: string,
-    email: string,
+    _email: string,
     role: 'editor' | 'viewer' | 'admin' = 'viewer'
 ): Promise<CollaboratorRecord> {
     // Mock implementation
@@ -77,8 +67,8 @@ export async function removeCollaborator(id: string): Promise<void> {
  * Generate an invite code for a whiteboard
  */
 export async function generateInviteCode(
-    whiteboardId: string,
-    role: 'editor' | 'viewer' = 'viewer',
+    _whiteboardId: string,
+    _role: 'editor' | 'viewer' = 'viewer',
     expiresInHours: number = 24
 ): Promise<{ inviteCode: string; expiresAt: string }> {
     // Mock implementation

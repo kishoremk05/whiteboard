@@ -11,7 +11,6 @@ import {
   DialogTitle,
   DialogFooter,
 } from "../ui/dialog";
-// import { supabase } from '../../lib/supabase';
 import { toast } from "sonner";
 
 interface CreateOrganizationModalProps {

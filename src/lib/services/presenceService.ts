@@ -1,194 +1,112 @@
-import { supabase } from '../supabase';
-import type { BoardPresence } from '../../types/database.types';
-
-/**
- * Presence Service
- * Real-time presence tracking for board collaboration
- */
+import type { BoardPresence } from "../../types/database.types";
 
 export interface PresenceUser {
-    id: string;
-    user_id: string;
-    cursor_x: number;
-    cursor_y: number;
-    last_seen_at: string;
-    user_profile?: {
-        name: string;
-        email: string;
-    };
+  id: string;
+  user_id: string;
+  cursor_x: number;
+  cursor_y: number;
+  last_seen_at: string;
+  user_profile?: {
+    name: string;
+    email: string;
+  };
 }
 
-/**
- * Get current presence for a board
- */
+const presenceByBoard = new Map<string, BoardPresence[]>();
+
 export async function getBoardPresence(boardId: string): Promise<BoardPresence[]> {
-    // Only get presence updated in last 30 seconds (active users)
-    const thirtySecondsAgo = new Date(Date.now() - 30000).toISOString();
-
-    const { data, error } = await supabase
-        .from('board_presence')
-        .select('*')
-        .eq('board_id', boardId)
-        .gte('last_seen_at', thirtySecondsAgo);
-
-    if (error) throw error;
-    return data || [];
+  return presenceByBoard.get(boardId) || [];
 }
 
-/**
- * Get presence with user profile info
- */
-export async function getBoardPresenceWithUsers(boardId: string): Promise<PresenceUser[]> {
-    const thirtySecondsAgo = new Date(Date.now() - 30000).toISOString();
-
-    const { data, error } = await supabase
-        .from('board_presence')
-        .select(`
-      *,
-      user_profile:user_profiles(name, email)
-    `)
-        .eq('board_id', boardId)
-        .gte('last_seen_at', thirtySecondsAgo);
-
-    if (error) throw error;
-    return (data || []) as PresenceUser[];
+export async function getBoardPresenceWithUsers(
+  boardId: string,
+): Promise<PresenceUser[]> {
+  return (presenceByBoard.get(boardId) || []).map((presence) => ({
+    ...presence,
+    user_profile: {
+      name: "Active User",
+      email: "user@example.com",
+    },
+  }));
 }
 
-/**
- * Join a board (register presence)
- */
-export async function joinBoard(boardId: string, userId: string): Promise<BoardPresence> {
-    // Upsert presence record
-    const { data, error } = await supabase
-        .from('board_presence')
-        .upsert({
-            board_id: boardId,
-            user_id: userId,
-            cursor_x: 0,
-            cursor_y: 0,
-            last_seen_at: new Date().toISOString(),
-        }, {
-            onConflict: 'board_id,user_id',
-        })
-        .select()
-        .single();
+export async function joinBoard(
+  boardId: string,
+  userId: string,
+): Promise<BoardPresence> {
+  const now = new Date().toISOString();
+  const current = presenceByBoard.get(boardId) || [];
+  const existing = current.find((p) => p.user_id === userId);
 
-    if (error) throw error;
-    return data;
+  const joined: BoardPresence =
+    existing || {
+      id: `presence-${Date.now()}`,
+      board_id: boardId,
+      user_id: userId,
+      cursor_x: 0,
+      cursor_y: 0,
+      last_seen_at: now,
+    };
+
+  const next = [...current.filter((p) => p.user_id !== userId), joined];
+  presenceByBoard.set(boardId, next);
+  return joined;
 }
 
-/**
- * Leave a board (remove presence)
- */
 export async function leaveBoard(boardId: string, userId: string): Promise<void> {
-    const { error } = await supabase
-        .from('board_presence')
-        .delete()
-        .eq('board_id', boardId)
-        .eq('user_id', userId);
-
-    if (error) throw error;
+  const current = presenceByBoard.get(boardId) || [];
+  presenceByBoard.set(
+    boardId,
+    current.filter((p) => p.user_id !== userId),
+  );
 }
 
-/**
- * Update cursor position
- */
 export async function updateCursorPosition(
-    boardId: string,
-    userId: string,
-    cursorX: number,
-    cursorY: number
+  boardId: string,
+  userId: string,
+  cursorX: number,
+  cursorY: number,
 ): Promise<void> {
-    const { error } = await supabase
-        .from('board_presence')
-        .upsert({
-            board_id: boardId,
-            user_id: userId,
-            cursor_x: cursorX,
-            cursor_y: cursorY,
-            last_seen_at: new Date().toISOString(),
-        }, {
-            onConflict: 'board_id,user_id',
-        });
+  const current = presenceByBoard.get(boardId) || [];
+  const now = new Date().toISOString();
+  const existing = current.find((p) => p.user_id === userId);
 
-    if (error) throw error;
+  const updated: BoardPresence = existing
+    ? {
+        ...existing,
+        cursor_x: cursorX,
+        cursor_y: cursorY,
+        last_seen_at: now,
+      }
+    : {
+        id: `presence-${Date.now()}`,
+        board_id: boardId,
+        user_id: userId,
+        cursor_x: cursorX,
+        cursor_y: cursorY,
+        last_seen_at: now,
+      };
+
+  const next = [...current.filter((p) => p.user_id !== userId), updated];
+  presenceByBoard.set(boardId, next);
 }
 
-/**
- * Subscribe to presence changes using Supabase Realtime
- */
 export function subscribeToPresence(
-    boardId: string,
-    onPresenceChange: (presences: BoardPresence[]) => void
+  _boardId: string,
+  _onPresenceChange: (presences: BoardPresence[]) => void,
 ) {
-    const channel = supabase
-        .channel(`presence:${boardId}`)
-        .on(
-            'postgres_changes',
-            {
-                event: '*',
-                schema: 'public',
-                table: 'board_presence',
-                filter: `board_id=eq.${boardId}`,
-            },
-            async () => {
-                // Refetch all presence when any change occurs
-                const presences = await getBoardPresence(boardId);
-                onPresenceChange(presences);
-            }
-        )
-        .subscribe();
-
-    return () => {
-        supabase.removeChannel(channel);
-    };
+  return () => {};
 }
 
-/**
- * Use Supabase Presence (broadcast-based, more efficient for cursors)
- */
 export function useBroadcastPresence(
-    boardId: string,
-    userId: string,
-    userName: string,
-    onPresenceSync: (state: Record<string, { cursor_x: number; cursor_y: number; name: string }[]>) => void
+  _boardId: string,
+  _userId: string,
+  _userName: string,
+  _onPresenceSync: (
+    state: Record<string, { cursor_x: number; cursor_y: number; name: string }[]>,
+  ) => void,
 ) {
-    const channel = supabase.channel(`room:${boardId}`, {
-        config: {
-            presence: {
-                key: userId,
-            },
-        },
-    });
-
-    channel
-        .on('presence', { event: 'sync' }, () => {
-            const state = channel.presenceState();
-            onPresenceSync(state as unknown as Record<string, { cursor_x: number; cursor_y: number; name: string }[]>);
-        })
-        .subscribe(async (status: string) => {
-            if (status === 'SUBSCRIBED') {
-                await channel.track({
-                    cursor_x: 0,
-                    cursor_y: 0,
-                    name: userName,
-                    online_at: new Date().toISOString(),
-                });
-            }
-        });
-
-    const updatePosition = (cursorX: number, cursorY: number) => {
-        channel.track({
-            cursor_x: cursorX,
-            cursor_y: cursorY,
-            name: userName,
-            online_at: new Date().toISOString(),
-        });
-    };
-
-    const cleanup = () => {
-        supabase.removeChannel(channel);
-    };
-
-    return { updatePosition, cleanup };
+  const updatePosition = (_cursorX: number, _cursorY: number) => {};
+  const cleanup = () => {};
+  return { updatePosition, cleanup };
 }

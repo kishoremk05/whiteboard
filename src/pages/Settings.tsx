@@ -43,7 +43,6 @@ import { Switch } from "../components/ui/switch";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { Badge } from "../components/ui/badge";
 import { Separator } from "../components/ui/separator";
-// import { useAuth } from "../contexts/AuthContext";
 import { getInitials, cn } from "../lib/utils";
 import { toast } from "sonner";
 

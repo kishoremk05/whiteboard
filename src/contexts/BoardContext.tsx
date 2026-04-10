@@ -6,19 +6,6 @@ import {
   useCallback,
 } from "react";
 import type { ReactNode } from "react";
-// import { useAuth } from "./AuthContext";
-// import { supabase } from "../lib/supabase";
-// import {
-//   fetchUserWhiteboards,
-//   fetchSharedWhiteboards,
-//   fetchDeletedWhiteboards,
-//   createWhiteboard as createWhiteboardService,
-//   updateWhiteboard as updateWhiteboardService,
-//   deleteWhiteboard as deleteWhiteboardService,
-//   restoreWhiteboard as restoreWhiteboardService,
-//   permanentlyDeleteWhiteboard as permanentlyDeleteWhiteboardService,
-//   duplicateWhiteboard as duplicateWhiteboardService,
-// } from "../lib/services/whiteboardService";
 
 // Mock whiteboard service functions
 const fetchUserWhiteboards = async (
@@ -58,12 +45,6 @@ const duplicateWhiteboardService = async (
   user_id: "mock-user-id",
   data: {},
 });
-
-// import type {
-//   DbWhiteboard,
-//   Folder,
-//   FolderInsert,
-// } from "../types/database.types";
 
 // Mock types
 interface DbWhiteboard {

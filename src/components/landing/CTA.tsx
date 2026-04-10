@@ -1,7 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, Check, Sparkles, Users, Zap } from "lucide-react";
 import { Button } from "../ui/button";
-// import { useAuth } from "../../contexts/AuthContext";
 
 const features = [
   { icon: Check, text: "Unlimited boards" },
@@ -12,8 +11,6 @@ const features = [
 
 export function CTA() {
   const navigate = useNavigate();
-  // const { isAuthenticated } = useAuth();
-  const isAuthenticated = false; // Mock: user not authenticated
 
   return (
     <section className="py-24 lg:py-32 bg-gray-900 relative overflow-hidden">
@@ -84,7 +81,7 @@ export function CTA() {
         {/* CTA Buttons */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Button
-            onClick={() => navigate(isAuthenticated ? "/dashboard" : "/signup")}
+            onClick={() => navigate("/dashboard")}
             size="lg"
             className="w-full sm:w-auto bg-white text-gray-900 hover:bg-gray-100 rounded-full px-10 py-7 text-lg font-semibold shadow-2xl hover:shadow-white/20 transition-all duration-300 group"
           >
@@ -93,11 +90,11 @@ export function CTA() {
           </Button>
           <Button
             variant="outline"
-            onClick={() => navigate("/login")}
+            onClick={() => navigate("/dashboard/team")}
             size="lg"
             className="w-full sm:w-auto border-2 border-white/30 text-black hover:bg-white/10 rounded-full px-10 py-7 text-lg font-medium backdrop-blur-sm"
           >
-            Request a Demo
+            Explore Team Features
           </Button>
         </div>
 

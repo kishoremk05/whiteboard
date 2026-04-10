@@ -12,7 +12,6 @@ import {
 
 import { cn, getInitials } from "../../lib/utils";
 import { useBoards } from "../../contexts/BoardContext";
-// import { useAuth } from '../../contexts/AuthContext';
 
 interface SidebarProps {
   isOpen: boolean;

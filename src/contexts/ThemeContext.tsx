@@ -1,6 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import type { ReactNode } from "react";
-// import { useAuth } from './AuthContext';
 
 type Theme = "light" | "dark" | "system";
 
@@ -13,25 +12,18 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  // const { user } = useAuth();
-  const user: { preferences?: { theme?: Theme } } | null = null; // Mock user for now
   const [theme, setThemeState] = useState<Theme>("system");
   const [effectiveTheme, setEffectiveTheme] = useState<"light" | "dark">(
     "light",
   );
 
-  // Initialize theme from user preferences
+  // Initialize theme from localStorage or system
   useEffect(() => {
-    if (user?.preferences?.theme) {
-      setThemeState(user.preferences.theme);
-    } else {
-      // Fallback to localStorage or system
-      const savedTheme = localStorage.getItem("theme") as Theme | null;
-      if (savedTheme) {
-        setThemeState(savedTheme);
-      }
+    const savedTheme = localStorage.getItem("theme") as Theme | null;
+    if (savedTheme) {
+      setThemeState(savedTheme);
     }
-  }, [user]);
+  }, []);
 
   // Determine effective theme based on theme setting
   useEffect(() => {
@@ -82,12 +74,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
     localStorage.setItem("theme", newTheme);
-
-    // Update user preference if logged in
-    if (user) {
-      // Note: Authentication removed - theme saved locally only
-      console.log("Updating theme preference to:", newTheme);
-    }
   };
 
   return (

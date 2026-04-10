@@ -20,7 +20,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-// import { useAuth } from "../../contexts/AuthContext";
 
 import { getInitials, cn } from "../../lib/utils";
 

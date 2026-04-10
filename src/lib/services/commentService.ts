@@ -1,155 +1,94 @@
-import { supabase } from '../supabase';
-import type { BoardComment, CommentInsert, CommentUpdate } from '../../types/database.types';
+import type {
+  BoardComment,
+  CommentInsert,
+  CommentUpdate,
+} from "../../types/database.types";
 
-/**
- * Comment Service
- * CRUD operations for board_comments table
- */
+const commentsByBoard = new Map<string, BoardComment[]>();
 
-/**
- * Fetch all comments for a specific board
- */
+type CommentWithUser = BoardComment & {
+  user_profile?: { name: string; email: string };
+};
+
 export async function fetchComments(boardId: string): Promise<BoardComment[]> {
-    const { data, error } = await supabase
-        .from('board_comments')
-        .select('*')
-        .eq('board_id', boardId)
-        .order('created_at', { ascending: true });
-
-    if (error) throw error;
-    return data || [];
+  return commentsByBoard.get(boardId) || [];
 }
 
-/**
- * Fetch comments with user profile info
- */
-export async function fetchCommentsWithUsers(boardId: string): Promise<(BoardComment & { user_profile?: { name: string; email: string } })[]> {
-    const { data, error } = await supabase
-        .from('board_comments')
-        .select(`
-      *,
-      user_profile:user_profiles(name, email)
-    `)
-        .eq('board_id', boardId)
-        .order('created_at', { ascending: true });
-
-    if (error) throw error;
-    return data || [];
+export async function fetchCommentsWithUsers(
+  boardId: string,
+): Promise<CommentWithUser[]> {
+  return (commentsByBoard.get(boardId) || []).map((comment) => ({
+    ...comment,
+    user_profile: { name: "Collaborator", email: "collaborator@example.com" },
+  }));
 }
 
-/**
- * Create a new comment
- */
 export async function createComment(comment: CommentInsert): Promise<BoardComment> {
-    const { data, error } = await supabase
-        .from('board_comments')
-        .insert(comment)
-        .select()
-        .single();
+  const now = new Date().toISOString();
+  const created: BoardComment = {
+    id: `comment-${Date.now()}`,
+    board_id: comment.board_id,
+    user_id: comment.user_id,
+    content: comment.content,
+    resolved: comment.resolved ?? false,
+    created_at: now,
+    updated_at: now,
+  };
 
-    if (error) throw error;
-    return data;
+  const existing = commentsByBoard.get(comment.board_id) || [];
+  commentsByBoard.set(comment.board_id, [...existing, created]);
+  return created;
 }
 
-/**
- * Update an existing comment
- */
-export async function updateComment(id: string, updates: CommentUpdate): Promise<BoardComment> {
-    const { data, error } = await supabase
-        .from('board_comments')
-        .update({ ...updates, updated_at: new Date().toISOString() })
-        .eq('id', id)
-        .select()
-        .single();
+export async function updateComment(
+  id: string,
+  updates: CommentUpdate,
+): Promise<BoardComment> {
+  for (const [boardId, comments] of commentsByBoard.entries()) {
+    const idx = comments.findIndex((c) => c.id === id);
+    if (idx >= 0) {
+      const next: BoardComment = {
+        ...comments[idx],
+        ...updates,
+        updated_at: new Date().toISOString(),
+      };
+      const cloned = [...comments];
+      cloned[idx] = next;
+      commentsByBoard.set(boardId, cloned);
+      return next;
+    }
+  }
 
-    if (error) throw error;
-    return data;
+  throw new Error("Comment not found");
 }
 
-/**
- * Resolve a comment
- */
 export async function resolveComment(id: string): Promise<BoardComment> {
-    return updateComment(id, { resolved: true });
+  return updateComment(id, { resolved: true });
 }
 
-/**
- * Unresolve a comment
- */
 export async function unresolveComment(id: string): Promise<BoardComment> {
-    return updateComment(id, { resolved: false });
+  return updateComment(id, { resolved: false });
 }
 
-/**
- * Delete a comment
- */
 export async function deleteComment(id: string): Promise<void> {
-    const { error } = await supabase
-        .from('board_comments')
-        .delete()
-        .eq('id', id);
-
-    if (error) throw error;
+  for (const [boardId, comments] of commentsByBoard.entries()) {
+    const next = comments.filter((c) => c.id !== id);
+    if (next.length !== comments.length) {
+      commentsByBoard.set(boardId, next);
+      return;
+    }
+  }
 }
 
-/**
- * Fetch unresolved comments count for a board
- */
 export async function getUnresolvedCount(boardId: string): Promise<number> {
-    const { count, error } = await supabase
-        .from('board_comments')
-        .select('*', { count: 'exact', head: true })
-        .eq('board_id', boardId)
-        .eq('resolved', false);
-
-    if (error) throw error;
-    return count || 0;
+  return (commentsByBoard.get(boardId) || []).filter((c) => !c.resolved).length;
 }
 
-/**
- * Subscribe to comment changes for real-time updates
- */
 export function subscribeToComments(
-    boardId: string,
-    onInsert: (comment: BoardComment) => void,
-    onUpdate: (comment: BoardComment) => void,
-    onDelete: (id: string) => void
+  _boardId: string,
+  _onInsert: (comment: BoardComment) => void,
+  _onUpdate: (comment: BoardComment) => void,
+  _onDelete: (id: string) => void,
 ) {
-    const channel = supabase
-        .channel(`comments:${boardId}`)
-        .on(
-            'postgres_changes',
-            {
-                event: 'INSERT',
-                schema: 'public',
-                table: 'board_comments',
-                filter: `board_id=eq.${boardId}`,
-            },
-            (payload: { new: unknown }) => onInsert(payload.new as BoardComment)
-        )
-        .on(
-            'postgres_changes',
-            {
-                event: 'UPDATE',
-                schema: 'public',
-                table: 'board_comments',
-                filter: `board_id=eq.${boardId}`,
-            },
-            (payload: { new: unknown }) => onUpdate(payload.new as BoardComment)
-        )
-        .on(
-            'postgres_changes',
-            {
-                event: 'DELETE',
-                schema: 'public',
-                table: 'board_comments',
-                filter: `board_id=eq.${boardId}`,
-            },
-            (payload: { old: unknown }) => onDelete((payload.old as { id: string }).id)
-        )
-        .subscribe();
-
-    return () => {
-        supabase.removeChannel(channel);
-    };
+  return () => {};
 }

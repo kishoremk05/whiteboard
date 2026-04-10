@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import gsap from "gsap";
 import { Pencil, Square, Circle, Type } from "lucide-react";
 import { Button } from "../ui/button";
-// import { useAuth } from "../../contexts/AuthContext";
 
 export function Hero() {
   const navigate = useNavigate();
@@ -276,7 +275,7 @@ export function Hero() {
           <Button
             size="lg"
             variant="outline"
-            onClick={() => navigate("/login")}
+            onClick={() => navigate("/dashboard")}
             className="border-2 border-gray-900 text-gray-900 hover:bg-gray-50 rounded-lg px-8 py-6 text-base font-semibold"
           >
             See How It Works

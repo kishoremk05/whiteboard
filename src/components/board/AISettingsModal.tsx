@@ -3,7 +3,11 @@ import { Settings, X, Key, Loader2 } from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { toast } from "sonner";
-import { saveUserApiKey, getUserApiKey, deleteUserApiKey } from "../../lib/services/apiKeyService";
+import {
+  saveUserApiKey,
+  getUserApiKey,
+  deleteUserApiKey,
+} from "../../lib/services/apiKeyService";
 
 interface AISettingsModalProps {
   open: boolean;
@@ -15,7 +19,7 @@ export function AISettingsModal({ open, onOpenChange }: AISettingsModalProps) {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
 
-  // Load API key from Supabase when modal opens
+  // Load API key from local storage service when modal opens
   useEffect(() => {
     if (open) {
       loadApiKey();

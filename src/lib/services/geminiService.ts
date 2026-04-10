@@ -1,14 +1,14 @@
 import { type AIMode } from "../../components/board/AIAssistanceToggle";
 import { getUserApiKey } from "../services/apiKeyService";
 
-// Get API key from Supabase (user's key), localStorage, or environment variable (default)
+// Get API key from local storage service, localStorage fallback, or env variable.
 async function getApiKey(): Promise<string> {
-    // Try Supabase first
+    // Try stored key first
     try {
-        const supabaseKey = await getUserApiKey();
-        if (supabaseKey) return supabaseKey;
+        const savedKey = await getUserApiKey();
+        if (savedKey) return savedKey;
     } catch (e) {
-        // Supabase fetch failed, continue to fallbacks
+        // Continue to fallbacks
     }
 
     // Fallback to localStorage

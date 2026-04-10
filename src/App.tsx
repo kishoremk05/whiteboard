@@ -6,7 +6,6 @@ import {
   Navigate,
 } from "react-router-dom";
 import { Toaster } from "sonner";
-// import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { BoardProvider } from "./contexts/BoardContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { TooltipProvider } from "./components/ui/tooltip";
@@ -14,17 +13,12 @@ import { CommandPalette } from "./components/search/CommandPalette";
 
 // Pages
 import { Landing } from "./pages/Landing";
-// import { Login } from './pages/Login';
-// import { SignUp } from './pages/SignUp';
-// import { ForgotPassword } from './pages/ForgotPassword';
 import { Dashboard } from "./pages/Dashboard";
 import { Favorites } from "./pages/Favorites";
 import { TrashPage } from "./pages/Trash";
 import { Settings } from "./pages/Settings";
 import { Team } from "./pages/Team";
 import { Board } from "./pages/Board";
-
-// Authentication logic removed
 
 // Global command palette wrapper
 function GlobalCommandPalette() {

@@ -17,7 +17,7 @@ A modern, collaborative whiteboard SaaS application built with React, TypeScript
 - **Styling**: Tailwind CSS
 - **UI Components**: shadcn/ui, Radix UI
 - **Animations**: GSAP
-- **Backend**: Supabase (Auth, Database, Storage)
+- **Data**: Frontend-only (local state and localStorage)
 - **Canvas**: TLDraw (coming soon)
 
 ## Getting Started
@@ -30,23 +30,26 @@ A modern, collaborative whiteboard SaaS application built with React, TypeScript
 ### Installation
 
 1. Clone the repository:
+
 ```bash
 git clone https://github.com/TheEightboys/aimvp-whiteboard.git
 cd aimvp-whiteboard
 ```
 
 2. Install dependencies:
+
 ```bash
 npm install
 ```
 
-3. Create a `.env.local` file with your Supabase credentials:
+3. (Optional) Create a `.env.local` file for Gemini API usage:
+
 ```bash
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+VITE_GEMINI_API_KEY=your_gemini_api_key
 ```
 
 4. Start the development server:
+
 ```bash
 npm run dev
 ```
@@ -56,7 +59,6 @@ npm run dev
 ```
 src/
 ├── components/
-│   ├── auth/          # Authentication components
 │   ├── dashboard/     # Dashboard components
 │   ├── landing/       # Landing page components
 │   ├── search/        # Search and command palette

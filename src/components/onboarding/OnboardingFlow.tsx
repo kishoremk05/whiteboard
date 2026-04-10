@@ -16,7 +16,6 @@ import {
   MousePointerClick,
 } from "lucide-react";
 import { Button } from "../ui/button";
-// import { useAuth } from '../../contexts/AuthContext';
 import { useBoards } from "../../contexts/BoardContext";
 import { templates } from "../../data/mockData";
 import { cn } from "../../lib/utils";
@@ -81,8 +80,6 @@ const templateColors: Record<string, string> = {
 
 export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   const navigate = useNavigate();
-  // const { user } = useAuth();
-  const user: { name?: string } | null = null; // Mock user
   const { createBoard } = useBoards();
   const [step, setStep] = useState<Step>("welcome");
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
@@ -216,7 +213,7 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
                 </div>
               </div>
               <h1 className="text-4xl lg:text-5xl font-bold text-slate-900 mb-4">
-                Welcome, {user?.name?.split(" ")[0] || "Creator"}!
+                Welcome, Creator!
               </h1>
               <p className="text-xl text-slate-600 max-w-lg mx-auto mb-10">
                 You're about to unlock the most powerful way to visualize and
