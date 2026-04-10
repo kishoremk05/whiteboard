@@ -40,11 +40,11 @@ export function DashboardHeader({
   const navigate = useNavigate();
   // const { user, logout } = useAuth();
   const user = {
-    name: 'MockUser',
-    email: 'mock@example.com',
-    avatar: ''
+    name: "MockUser",
+    email: "mock@example.com",
+    avatar: "",
   };
-  const logout = () => console.log('Mock logout');
+  const logout = () => console.log("Mock logout");
 
   const handleLogout = async () => {
     await logout();
@@ -175,14 +175,14 @@ export function DashboardHeader({
                     key={i}
                     className={cn(
                       "w-full p-3 text-left hover:bg-slate-50 transition-colors",
-                      notification.unread && "bg-blue-50/50"
+                      notification.unread && "bg-blue-50/50",
                     )}
                   >
                     <div className="flex items-start gap-3">
                       <div
                         className={cn(
                           "w-2 h-2 rounded-full mt-1.5 flex-shrink-0",
-                          notification.unread ? "bg-blue-500" : "bg-slate-300"
+                          notification.unread ? "bg-blue-500" : "bg-slate-300",
                         )}
                       />
                       <div>

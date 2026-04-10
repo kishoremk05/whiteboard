@@ -34,7 +34,7 @@ export function Hero() {
           opacity: 0,
           duration: 0.6,
         },
-        "-=0.4"
+        "-=0.4",
       );
 
       tl.from(
@@ -44,7 +44,7 @@ export function Hero() {
           opacity: 0,
           duration: 0.5,
         },
-        "-=0.3"
+        "-=0.3",
       );
 
       tl.from(
@@ -53,7 +53,7 @@ export function Hero() {
           opacity: 0,
           duration: 0.4,
         },
-        "-=0.2"
+        "-=0.2",
       );
 
       // Animate floating elements
@@ -66,7 +66,7 @@ export function Hero() {
           stagger: 0.1,
           ease: "back.out(1.7)",
         },
-        "-=0.3"
+        "-=0.3",
       );
     }, heroRef);
 
@@ -87,7 +87,7 @@ export function Hero() {
               linear-gradient(to right, #e5e7eb 1px, transparent 1px),
               linear-gradient(to bottom, #e5e7eb 1px, transparent 1px)
             `,
-            backgroundSize: '40px 40px'
+            backgroundSize: "40px 40px",
           }}
         />
       </div>
@@ -244,7 +244,8 @@ export function Hero() {
 
         {/* Description */}
         <p className="hero-desc text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto mb-10 leading-relaxed">
-          Collaborate visually in real-time. Sketch ideas, share feedback, and build together on an endless canvas designed for teams.
+          Collaborate visually in real-time. Sketch ideas, share feedback, and
+          build together on an endless canvas designed for teams.
         </p>
 
         {/* Feature badges */}

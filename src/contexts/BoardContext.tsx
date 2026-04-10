@@ -21,28 +21,41 @@ import type { ReactNode } from "react";
 // } from "../lib/services/whiteboardService";
 
 // Mock whiteboard service functions
-const fetchUserWhiteboards = async (userId: string): Promise<DbWhiteboard[]> => [];
-const fetchSharedWhiteboards = async (userId: string): Promise<DbWhiteboard[]> => [];
-const fetchDeletedWhiteboards = async (userId: string): Promise<DbWhiteboard[]> => [];
+const fetchUserWhiteboards = async (
+  userId: string,
+): Promise<DbWhiteboard[]> => [];
+const fetchSharedWhiteboards = async (
+  userId: string,
+): Promise<DbWhiteboard[]> => [];
+const fetchDeletedWhiteboards = async (
+  userId: string,
+): Promise<DbWhiteboard[]> => [];
 const createWhiteboardService = async (data: any): Promise<DbWhiteboard> => ({
   id: `wb-${Date.now()}`,
-  title: data.title || 'New Board',
+  title: data.title || "New Board",
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
   user_id: data.user_id,
-  data: data.data || {}
+  data: data.data || {},
 });
-const updateWhiteboardService = async (id: string, data: any): Promise<void> => {};
+const updateWhiteboardService = async (
+  id: string,
+  data: any,
+): Promise<void> => {};
 const deleteWhiteboardService = async (id: string): Promise<void> => {};
 const restoreWhiteboardService = async (id: string): Promise<void> => {};
-const permanentlyDeleteWhiteboardService = async (id: string): Promise<void> => {};
-const duplicateWhiteboardService = async (id: string): Promise<DbWhiteboard> => ({
+const permanentlyDeleteWhiteboardService = async (
+  id: string,
+): Promise<void> => {};
+const duplicateWhiteboardService = async (
+  id: string,
+): Promise<DbWhiteboard> => ({
   id: `wb-${Date.now()}`,
-  title: 'Copy of Board',
+  title: "Copy of Board",
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
-  user_id: 'mock-user-id',
-  data: {}
+  user_id: "mock-user-id",
+  data: {},
 });
 
 // import type {
@@ -150,7 +163,7 @@ interface BoardContextType {
   createBoard: (
     title: string,
     template?: string,
-    folderId?: string
+    folderId?: string,
   ) => Promise<Board>;
   updateBoard: (id: string, updates: Partial<Board>) => Promise<void>;
   deleteBoard: (id: string) => Promise<void>;
@@ -211,7 +224,7 @@ function transformWhiteboard(wb: DbWhiteboard, isShared = false): Board {
 
 export function BoardProvider({ children }: { children: ReactNode }) {
   // const { user, isAuthenticated } = useAuth();
-  const user = { id: 'mock-user-id' };
+  const user = { id: "mock-user-id" };
   const isAuthenticated = true;
   const [boards, setBoards] = useState<Board[]>([]);
   const [deletedBoards, setDeletedBoards] = useState<Board[]>([]);
@@ -235,20 +248,20 @@ export function BoardProvider({ children }: { children: ReactNode }) {
       // Fetch owned whiteboards
       const ownedWhiteboards = await fetchUserWhiteboards(user.id);
       const ownedBoards = ownedWhiteboards.map((wb) =>
-        transformWhiteboard(wb, false)
+        transformWhiteboard(wb, false),
       );
 
       // Fetch shared whiteboards
       const sharedWhiteboards = await fetchSharedWhiteboards(user.id);
       const sharedBoards = sharedWhiteboards.map((wb) =>
-        transformWhiteboard(wb, true)
+        transformWhiteboard(wb, true),
       );
 
       // Combine and deduplicate
       const allBoards = [...ownedBoards, ...sharedBoards];
       const uniqueBoards = allBoards.filter(
         (board, index, self) =>
-          self.findIndex((b) => b.id === board.id) === index
+          self.findIndex((b) => b.id === board.id) === index,
       );
 
       setBoards(uniqueBoards);
@@ -256,7 +269,7 @@ export function BoardProvider({ children }: { children: ReactNode }) {
       // Fetch deleted boards
       const deletedWhiteboards = await fetchDeletedWhiteboards(user.id);
       const deletedBoardsList = deletedWhiteboards.map((wb) =>
-        transformWhiteboard(wb, false)
+        transformWhiteboard(wb, false),
       );
       setDeletedBoards(deletedBoardsList);
 
@@ -281,7 +294,7 @@ export function BoardProvider({ children }: { children: ReactNode }) {
     try {
       // Mock organizations data
       const memberData: any[] = [];
-      
+
       if (!memberData || memberData.length === 0) {
         setOrganizations([]);
         setCurrentOrganization(null);
@@ -307,7 +320,7 @@ export function BoardProvider({ children }: { children: ReactNode }) {
                 email: m.user_profiles?.email || "",
                 avatar: undefined,
               },
-            })
+            }),
           );
 
           return {
@@ -320,7 +333,7 @@ export function BoardProvider({ children }: { children: ReactNode }) {
             members,
             subscription: org.subscription || "free",
           };
-        })
+        }),
       );
 
       setOrganizations(orgs);
@@ -359,7 +372,7 @@ export function BoardProvider({ children }: { children: ReactNode }) {
   const createBoard = async (
     title: string,
     template?: string,
-    folderId?: string
+    folderId?: string,
   ): Promise<Board> => {
     if (!user?.id) {
       console.error("createBoard failed: Not authenticated");
@@ -377,9 +390,8 @@ export function BoardProvider({ children }: { children: ReactNode }) {
       // Get template content if template is specified
       let boardData: Record<string, unknown> | null = null;
       if (template) {
-        const { getTemplateContent, hasTemplateContent } = await import(
-          "../lib/templateInitializer"
-        );
+        const { getTemplateContent, hasTemplateContent } =
+          await import("../lib/templateInitializer");
 
         // Check if template has pre-populated content
         if (hasTemplateContent(template)) {
@@ -389,7 +401,7 @@ export function BoardProvider({ children }: { children: ReactNode }) {
             template,
             "with",
             Object.keys(boardData).length,
-            "shapes"
+            "shapes",
           );
         } else {
           // Fallback to empty board
@@ -397,7 +409,7 @@ export function BoardProvider({ children }: { children: ReactNode }) {
           console.log(
             "No template content found for:",
             template,
-            "- creating blank board"
+            "- creating blank board",
           );
         }
       }
@@ -419,7 +431,7 @@ export function BoardProvider({ children }: { children: ReactNode }) {
       if (!newWhiteboard || !newWhiteboard.id) {
         console.error(
           "createWhiteboardService returned invalid data:",
-          newWhiteboard
+          newWhiteboard,
         );
         throw new Error("Failed to create board - no ID returned");
       }
@@ -438,7 +450,7 @@ export function BoardProvider({ children }: { children: ReactNode }) {
    */
   const updateBoard = async (
     id: string,
-    updates: Partial<Board>
+    updates: Partial<Board>,
   ): Promise<void> => {
     const dbUpdates: Record<string, unknown> = {};
     if (updates.title !== undefined) dbUpdates.title = updates.title;
@@ -453,8 +465,8 @@ export function BoardProvider({ children }: { children: ReactNode }) {
       prev.map((board) =>
         board.id === id
           ? { ...board, ...updates, updatedAt: new Date().toISOString() }
-          : board
-      )
+          : board,
+      ),
     );
   };
 
@@ -532,8 +544,8 @@ export function BoardProvider({ children }: { children: ReactNode }) {
                 isFavorite: newFavoriteStatus,
                 updatedAt: new Date().toISOString(),
               }
-            : b
-        )
+            : b,
+        ),
       );
 
       // Save to database via metadata
@@ -545,8 +557,8 @@ export function BoardProvider({ children }: { children: ReactNode }) {
       // Revert on error
       setBoards((prev) =>
         prev.map((b) =>
-          b.id === id ? { ...b, isFavorite: !newFavoriteStatus } : b
-        )
+          b.id === id ? { ...b, isFavorite: !newFavoriteStatus } : b,
+        ),
       );
     }
   };
@@ -566,7 +578,7 @@ export function BoardProvider({ children }: { children: ReactNode }) {
       name,
       user_id: user.id,
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     };
 
     setFolders((prev) => [...prev, data]);
@@ -576,7 +588,7 @@ export function BoardProvider({ children }: { children: ReactNode }) {
   const updateFolder = async (id: string, name: string): Promise<void> => {
     // Mock folder update
     setFolders((prev) =>
-      prev.map((folder) => (folder.id === id ? { ...folder, name } : folder))
+      prev.map((folder) => (folder.id === id ? { ...folder, name } : folder)),
     );
   };
 
@@ -585,14 +597,14 @@ export function BoardProvider({ children }: { children: ReactNode }) {
     setFolders((prev) => prev.filter((f) => f.id !== id));
     setBoards((prev) =>
       prev.map((board) =>
-        board.folderId === id ? { ...board, folderId: undefined } : board
-      )
+        board.folderId === id ? { ...board, folderId: undefined } : board,
+      ),
     );
   };
 
   const moveToFolder = async (
     boardId: string,
-    folderId: string | null
+    folderId: string | null,
   ): Promise<void> => {
     await updateBoard(boardId, { folderId: folderId || undefined });
   };
@@ -607,7 +619,7 @@ export function BoardProvider({ children }: { children: ReactNode }) {
     return boards.filter(
       (board) =>
         board.title.toLowerCase().includes(lowerQuery) ||
-        board.description?.toLowerCase().includes(lowerQuery)
+        board.description?.toLowerCase().includes(lowerQuery),
     );
   };
 

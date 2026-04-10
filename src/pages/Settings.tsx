@@ -53,15 +53,15 @@ export function Settings() {
   // const { user, updateUser } = useAuth();
   // Mock user data
   const user = {
-    name: 'MockUser',
-    bio: 'Mock bio',
-    email: 'mock@example.com',
-    avatar: ''
+    name: "MockUser",
+    bio: "Mock bio",
+    email: "mock@example.com",
+    avatar: "",
   };
   const updateUser = (updates: any) => {
-    console.log('Mock updateUser:', updates);
+    console.log("Mock updateUser:", updates);
   };
-  
+
   const [name, setName] = useState(user?.name || "");
   const [bio, setBio] = useState(user?.bio || "");
   const [isSaving, setIsSaving] = useState(false);
@@ -161,7 +161,7 @@ export function Settings() {
             <TabsTrigger
               value="profile"
               className={cn(
-                "gap-2 rounded-lg data-[state=active]:bg-primary-500 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"
+                "gap-2 rounded-lg data-[state=active]:bg-primary-500 data-[state=active]:text-white data-[state=active]:shadow-md transition-all",
               )}
             >
               <User className="w-4 h-4" />
@@ -380,7 +380,7 @@ export function Settings() {
                           "hover:shadow-md hover:-translate-y-0.5",
                           theme === option.value
                             ? "border-primary-500 bg-primary-50 shadow-md"
-                            : "border-slate-200 hover:border-slate-300"
+                            : "border-slate-200 hover:border-slate-300",
                         )}
                       >
                         <div
@@ -388,7 +388,7 @@ export function Settings() {
                             "w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-2",
                             theme === option.value
                               ? "bg-primary-500 text-white"
-                              : "bg-slate-100 text-slate-600"
+                              : "bg-slate-100 text-slate-600",
                           )}
                         >
                           {option.icon}
@@ -398,7 +398,7 @@ export function Settings() {
                             "text-sm font-medium",
                             theme === option.value
                               ? "text-primary-700"
-                              : "text-slate-600"
+                              : "text-slate-600",
                           )}
                         >
                           {option.label}
@@ -504,7 +504,7 @@ export function Settings() {
                     key={setting.id}
                     className={cn(
                       "flex items-center justify-between p-4 rounded-xl transition-colors hover:bg-slate-50",
-                      "animate-in fade-in-0 slide-in-from-left-2"
+                      "animate-in fade-in-0 slide-in-from-left-2",
                     )}
                     style={{
                       animationDelay: `${index * 50}ms`,
