@@ -1,4 +1,4 @@
-import { supabase } from '../supabase';
+// import { supabase } from '../supabase';
 import type { DbTemplate, WhiteboardInsert } from '../../types/database.types';
 import { createWhiteboard } from './whiteboardService';
 

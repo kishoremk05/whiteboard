@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
-import { useAuth } from './AuthContext';
+// import { useAuth } from './AuthContext';
 
 type Theme = 'light' | 'dark' | 'system';
 
@@ -13,7 +13,8 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  // const { user } = useAuth();
+  const user = null; // Mock user for now
   const [theme, setThemeState] = useState<Theme>('system');
   const [effectiveTheme, setEffectiveTheme] = useState<'light' | 'dark'>('light');
 
@@ -82,8 +83,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     
     // Update user preference if logged in
     if (user) {
-      // Note: This would need to call updateUser from AuthContext
-      // For now, just save locally
+      // Note: Authentication removed - theme saved locally only
       console.log('Updating theme preference to:', newTheme);
     }
   };

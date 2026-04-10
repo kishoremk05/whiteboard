@@ -43,14 +43,25 @@ import { Switch } from "../components/ui/switch";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { Badge } from "../components/ui/badge";
 import { Separator } from "../components/ui/separator";
-import { useAuth } from "../contexts/AuthContext";
+// import { useAuth } from "../contexts/AuthContext";
 import { getInitials, cn } from "../lib/utils";
 import { toast } from "sonner";
 
 type ThemeMode = "light" | "dark" | "system";
 
 export function Settings() {
-  const { user, updateUser } = useAuth();
+  // const { user, updateUser } = useAuth();
+  // Mock user data
+  const user = {
+    name: 'MockUser',
+    bio: 'Mock bio',
+    email: 'mock@example.com',
+    avatar: ''
+  };
+  const updateUser = (updates: any) => {
+    console.log('Mock updateUser:', updates);
+  };
+  
   const [name, setName] = useState(user?.name || "");
   const [bio, setBio] = useState(user?.bio || "");
   const [isSaving, setIsSaving] = useState(false);

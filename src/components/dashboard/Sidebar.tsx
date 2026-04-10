@@ -18,7 +18,7 @@ import {
 
 import { cn, getInitials } from '../../lib/utils';
 import { useBoards } from '../../contexts/BoardContext';
-import { useAuth } from '../../contexts/AuthContext';
+// import { useAuth } from '../../contexts/AuthContext';
 
 interface SidebarProps {
     isOpen: boolean;
@@ -29,7 +29,13 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     const location = useLocation();
     const navigate = useNavigate();
     const { boards, createBoard } = useBoards();
-    const { user, logout } = useAuth();
+    // const { user, logout } = useAuth();
+    const user = {
+        name: 'MockUser',
+        email: 'mock@example.com',
+        avatar: ''
+    };
+    const logout = () => console.log('Mock logout');
 
     // Get recent boards (last 2)
     const recentBoards = [...boards]

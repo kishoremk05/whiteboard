@@ -1,4 +1,4 @@
-import { supabase } from '../supabase';
+// import { supabase } from '../supabase';
 import type { BoardComment, CommentInsert, CommentUpdate } from '../../types/database.types';
 
 /**

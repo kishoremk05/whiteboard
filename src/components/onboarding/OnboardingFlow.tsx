@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles, ArrowRight, Check, Palette, Users, Zap, Target, Brain, Lock, Rocket, ChevronLeft, Play, MousePointerClick } from 'lucide-react';
 import { Button } from '../ui/button';
-import { useAuth } from '../../contexts/AuthContext';
+// import { useAuth } from '../../contexts/AuthContext';
 import { useBoards } from '../../contexts/BoardContext';
 import { templates } from '../../data/mockData';
 import { cn } from '../../lib/utils';
@@ -64,7 +64,8 @@ const templateColors: Record<string, string> = {
 
 export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
     const navigate = useNavigate();
-    const { user } = useAuth();
+    // const { user } = useAuth();
+    const user = null; // Mock user
     const { createBoard } = useBoards();
     const [step, setStep] = useState<Step>('welcome');
     const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);

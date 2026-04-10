@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, Check, Sparkles, Users, Zap } from "lucide-react";
 import { Button } from "../ui/button";
-import { useAuth } from "../../contexts/AuthContext";
+// import { useAuth } from "../../contexts/AuthContext";
 
 const features = [
   { icon: Check, text: "Unlimited boards" },
@@ -12,7 +12,8 @@ const features = [
 
 export function CTA() {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  // const { isAuthenticated } = useAuth();
+  const isAuthenticated = false; // Mock: user not authenticated
 
   return (
     <section className="py-24 lg:py-32 bg-gray-900 relative overflow-hidden">

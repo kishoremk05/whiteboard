@@ -6,25 +6,78 @@ import {
   useCallback,
 } from "react";
 import type { ReactNode } from "react";
-import { useAuth } from "./AuthContext";
-import { supabase } from "../lib/supabase";
-import {
-  fetchUserWhiteboards,
-  fetchSharedWhiteboards,
-  fetchDeletedWhiteboards,
-  createWhiteboard as createWhiteboardService,
-  updateWhiteboard as updateWhiteboardService,
-  deleteWhiteboard as deleteWhiteboardService,
-  restoreWhiteboard as restoreWhiteboardService,
-  permanentlyDeleteWhiteboard as permanentlyDeleteWhiteboardService,
-  duplicateWhiteboard as duplicateWhiteboardService,
-} from "../lib/services/whiteboardService";
+// import { useAuth } from "./AuthContext";
+// import { supabase } from "../lib/supabase";
+// import {
+//   fetchUserWhiteboards,
+//   fetchSharedWhiteboards,
+//   fetchDeletedWhiteboards,
+//   createWhiteboard as createWhiteboardService,
+//   updateWhiteboard as updateWhiteboardService,
+//   deleteWhiteboard as deleteWhiteboardService,
+//   restoreWhiteboard as restoreWhiteboardService,
+//   permanentlyDeleteWhiteboard as permanentlyDeleteWhiteboardService,
+//   duplicateWhiteboard as duplicateWhiteboardService,
+// } from "../lib/services/whiteboardService";
 
-import type {
-  DbWhiteboard,
-  Folder,
-  FolderInsert,
-} from "../types/database.types";
+// Mock whiteboard service functions
+const fetchUserWhiteboards = async (userId: string): Promise<DbWhiteboard[]> => [];
+const fetchSharedWhiteboards = async (userId: string): Promise<DbWhiteboard[]> => [];
+const fetchDeletedWhiteboards = async (userId: string): Promise<DbWhiteboard[]> => [];
+const createWhiteboardService = async (data: any): Promise<DbWhiteboard> => ({
+  id: `wb-${Date.now()}`,
+  title: data.title || 'New Board',
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+  user_id: data.user_id,
+  data: data.data || {}
+});
+const updateWhiteboardService = async (id: string, data: any): Promise<void> => {};
+const deleteWhiteboardService = async (id: string): Promise<void> => {};
+const restoreWhiteboardService = async (id: string): Promise<void> => {};
+const permanentlyDeleteWhiteboardService = async (id: string): Promise<void> => {};
+const duplicateWhiteboardService = async (id: string): Promise<DbWhiteboard> => ({
+  id: `wb-${Date.now()}`,
+  title: 'Copy of Board',
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+  user_id: 'mock-user-id',
+  data: {}
+});
+
+// import type {
+//   DbWhiteboard,
+//   Folder,
+//   FolderInsert,
+// } from "../types/database.types";
+
+// Mock types
+interface DbWhiteboard {
+  id: string;
+  title: string;
+  preview?: string;
+  created_at: string;
+  updated_at: string;
+  user_id: string;
+  folder_id?: string;
+  is_deleted?: boolean;
+  deleted_at?: string;
+  metadata?: any;
+  data?: any;
+}
+
+interface Folder {
+  id: string;
+  name: string;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface FolderInsert {
+  name: string;
+  user_id: string;
+}
 
 // Board type for the app (combines DB type with UI state)
 export interface Board {
@@ -157,7 +210,9 @@ function transformWhiteboard(wb: DbWhiteboard, isShared = false): Board {
 }
 
 export function BoardProvider({ children }: { children: ReactNode }) {
-  const { user, isAuthenticated } = useAuth();
+  // const { user, isAuthenticated } = useAuth();
+  const user = { id: 'mock-user-id' };
+  const isAuthenticated = true;
   const [boards, setBoards] = useState<Board[]>([]);
   const [deletedBoards, setDeletedBoards] = useState<Board[]>([]);
   const [folders, setFolders] = useState<Folder[]>([]);
@@ -206,13 +261,9 @@ export function BoardProvider({ children }: { children: ReactNode }) {
       setDeletedBoards(deletedBoardsList);
 
       // Fetch folders
-      const { data: folderData } = await supabase
-        .from("folders")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("name", { ascending: true });
-
-      setFolders(folderData || []);
+      // Mock folders data
+      const folderData: Folder[] = [];
+      setFolders(folderData);
     } catch (err) {
       console.error("Failed to fetch boards:", err);
       setError(err instanceof Error ? err.message : "Failed to fetch boards");
@@ -228,32 +279,9 @@ export function BoardProvider({ children }: { children: ReactNode }) {
     if (!user?.id) return;
 
     try {
-      // Fetch organizations where user is a member
-      const { data: memberData, error: memberError } = await supabase
-        .from("organization_members")
-        .select(
-          `
-          organization_id,
-          role,
-          joined_at,
-          organizations:organization_id (
-            id,
-            name,
-            slug,
-            logo,
-            owner_id,
-            subscription,
-            created_at
-          )
-        `
-        )
-        .eq("user_id", user.id);
-
-      if (memberError) {
-        console.error("Error fetching organizations:", memberError);
-        return;
-      }
-
+      // Mock organizations data
+      const memberData: any[] = [];
+      
       if (!memberData || memberData.length === 0) {
         setOrganizations([]);
         setCurrentOrganization(null);
@@ -265,22 +293,8 @@ export function BoardProvider({ children }: { children: ReactNode }) {
         memberData.map(async (membership: any) => {
           const org = membership.organizations;
 
-          // Fetch all members for this organization
-          const { data: allMembers } = await supabase
-            .from("organization_members")
-            .select(
-              `
-              user_id,
-              role,
-              joined_at,
-              user_profiles:user_id (
-                id,
-                name,
-                email
-              )
-            `
-            )
-            .eq("organization_id", org.id);
+          // Mock members data
+          const allMembers: any[] = [];
 
           const members: OrganizationMember[] = (allMembers || []).map(
             (m: any) => ({
@@ -546,45 +560,28 @@ export function BoardProvider({ children }: { children: ReactNode }) {
       user_id: user.id,
     };
 
-    const { data, error: insertError } = await supabase
-      .from("folders")
-      .insert(folderData)
-      .select()
-      .single();
-
-    if (insertError) throw insertError;
+    // Mock folder creation
+    const data: Folder = {
+      id: `folder-${Date.now()}`,
+      name,
+      user_id: user.id,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
 
     setFolders((prev) => [...prev, data]);
     return data;
   };
 
   const updateFolder = async (id: string, name: string): Promise<void> => {
-    const { error: updateError } = await supabase
-      .from("folders")
-      .update({ name, updated_at: new Date().toISOString() })
-      .eq("id", id);
-
-    if (updateError) throw updateError;
-
+    // Mock folder update
     setFolders((prev) =>
       prev.map((folder) => (folder.id === id ? { ...folder, name } : folder))
     );
   };
 
   const deleteFolder = async (id: string): Promise<void> => {
-    // Move boards out of folder first
-    await supabase
-      .from("whiteboards")
-      .update({ folder_id: null })
-      .eq("folder_id", id);
-
-    const { error: deleteError } = await supabase
-      .from("folders")
-      .delete()
-      .eq("id", id);
-
-    if (deleteError) throw deleteError;
-
+    // Mock folder deletion
     setFolders((prev) => prev.filter((f) => f.id !== id));
     setBoards((prev) =>
       prev.map((board) =>

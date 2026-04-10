@@ -11,7 +11,7 @@ import {
     DialogTitle,
     DialogFooter,
 } from '../ui/dialog';
-import { supabase } from '../../lib/supabase';
+// import { supabase } from '../../lib/supabase';
 import { toast } from 'sonner';
 
 interface CreateOrganizationModalProps {
@@ -40,62 +40,19 @@ export function CreateOrganizationModal({ open, onOpenChange, onSuccess }: Creat
         setIsCreating(true);
 
         try {
-            // Get current user
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) {
-                toast.error('Not authenticated');
-                return;
-            }
+            // Mock organization creation
+            await new Promise((resolve) => setTimeout(resolve, 1000));
 
             const slug = generateSlug(orgName);
 
-            // Check if slug already exists
-            const { data: existingOrg } = await supabase
-                .from('organizations')
-                .select('id')
-                .eq('slug', slug)
-                .single();
-
-            if (existingOrg) {
-                toast.error('An organization with this name already exists. Please choose a different name.');
-                setIsCreating(false);
-                return;
-            }
-
-            // Create organization
-            const { data: newOrg, error: orgError } = await supabase
-                .from('organizations')
-                .insert({
-                    name: orgName.trim(),
-                    slug,
-                    owner_id: user.id,
-                    subscription: 'free',
-                })
-                .select()
-                .single();
-
-            if (orgError) {
-                console.error('Error creating organization:', orgError);
-                toast.error('Failed to create organization');
-                setIsCreating(false);
-                return;
-            }
-
-            // Add creator as admin member
-            const { error: memberError } = await supabase
-                .from('organization_members')
-                .insert({
-                    organization_id: newOrg.id,
-                    user_id: user.id,
-                    role: 'admin',
-                });
-
-            if (memberError) {
-                console.error('Error adding member:', memberError);
-                toast.error('Failed to add you as admin');
-                setIsCreating(false);
-                return;
-            }
+            // Mock organization data
+            const newOrg = {
+                id: `org-${Date.now()}`,
+                name: orgName.trim(),
+                slug,
+                owner_id: 'mock-user-id',
+                subscription: 'free',
+            };
 
             toast.success('Organization created successfully!');
             setOrgName('');

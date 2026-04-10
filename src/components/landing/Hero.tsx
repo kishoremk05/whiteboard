@@ -3,20 +3,15 @@ import { useNavigate } from "react-router-dom";
 import gsap from "gsap";
 import { Pencil, Square, Circle, Type } from "lucide-react";
 import { Button } from "../ui/button";
-import { useAuth } from "../../contexts/AuthContext";
+// import { useAuth } from "../../contexts/AuthContext";
 
 export function Hero() {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  // const { isAuthenticated } = useAuth();
   const heroRef = useRef<HTMLDivElement>(null);
 
   const handleCreateBoard = () => {
-    // If user is logged in, go to dashboard; otherwise go to signup
-    if (isAuthenticated) {
-      navigate("/dashboard");
-    } else {
-      navigate("/signup");
-    }
+    navigate("/dashboard");
   };
 
   useEffect(() => {

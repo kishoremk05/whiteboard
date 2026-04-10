@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { Button } from '../ui/button';
-import { useAuth } from '../../contexts/AuthContext';
+// import { useAuth } from '../../contexts/AuthContext';
 
 export function Header() {
     const navigate = useNavigate();
-    const { isAuthenticated } = useAuth();
+    // const { isAuthenticated } = useAuth();
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -60,7 +60,7 @@ export function Header() {
                     {/* Desktop Auth Button */}
                     <div className="hidden lg:flex items-center">
                         <Button
-                            onClick={() => navigate(isAuthenticated ? '/dashboard' : '/login')}
+                            onClick={() => navigate('/dashboard')}
                             className="bg-gray-900 hover:bg-gray-800 text-white rounded-full px-6"
                         >
                             Dashboard
@@ -97,7 +97,7 @@ export function Header() {
                         ))}
                         <div className="pt-4 border-t border-gray-100">
                             <Button
-                                onClick={() => navigate(isAuthenticated ? '/dashboard' : '/login')}
+                                onClick={() => navigate('/dashboard')}
                                 className="w-full bg-gray-900 hover:bg-gray-800 text-white rounded-full"
                             >
                                 Dashboard

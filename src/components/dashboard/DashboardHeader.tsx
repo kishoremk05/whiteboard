@@ -20,7 +20,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import { useAuth } from "../../contexts/AuthContext";
+// import { useAuth } from "../../contexts/AuthContext";
 
 import { getInitials, cn } from "../../lib/utils";
 
@@ -38,7 +38,13 @@ export function DashboardHeader({
   onSearchChange,
 }: DashboardHeaderProps) {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  // const { user, logout } = useAuth();
+  const user = {
+    name: 'MockUser',
+    email: 'mock@example.com',
+    avatar: ''
+  };
+  const logout = () => console.log('Mock logout');
 
   const handleLogout = async () => {
     await logout();
