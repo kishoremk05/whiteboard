@@ -1,4 +1,4 @@
-// import { supabase } from '../supabase';
+import { supabase } from '../supabase';
 import type { BoardComment, CommentInsert, CommentUpdate } from '../../types/database.types';
 
 /**
@@ -125,7 +125,7 @@ export function subscribeToComments(
                 table: 'board_comments',
                 filter: `board_id=eq.${boardId}`,
             },
-            (payload) => onInsert(payload.new as BoardComment)
+            (payload: { new: unknown }) => onInsert(payload.new as BoardComment)
         )
         .on(
             'postgres_changes',
@@ -135,7 +135,7 @@ export function subscribeToComments(
                 table: 'board_comments',
                 filter: `board_id=eq.${boardId}`,
             },
-            (payload) => onUpdate(payload.new as BoardComment)
+            (payload: { new: unknown }) => onUpdate(payload.new as BoardComment)
         )
         .on(
             'postgres_changes',
@@ -145,7 +145,7 @@ export function subscribeToComments(
                 table: 'board_comments',
                 filter: `board_id=eq.${boardId}`,
             },
-            (payload) => onDelete((payload.old as { id: string }).id)
+            (payload: { old: unknown }) => onDelete((payload.old as { id: string }).id)
         )
         .subscribe();
 

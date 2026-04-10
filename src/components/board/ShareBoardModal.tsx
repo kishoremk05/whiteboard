@@ -49,7 +49,7 @@ export function ShareBoardModal({
   const [role, setRole] = useState<"editor" | "viewer" | "admin">("editor");
   const [isAdding, setIsAdding] = useState(false);
   const [collaborators, setCollaborators] = useState<CollaboratorWithUser[]>(
-    []
+    [],
   );
   const [isLoading, setIsLoading] = useState(true);
 
@@ -108,7 +108,7 @@ export function ShareBoardModal({
 
   const handleRemoveCollaborator = async (
     collaboratorId: string,
-    collaboratorEmail: string
+    collaboratorEmail: string,
   ) => {
     try {
       await removeCollaborator(collaboratorId);
@@ -181,7 +181,7 @@ export function ShareBoardModal({
                         "hover:shadow-md",
                         role === r
                           ? "border-gray-900 bg-gray-50 shadow-md"
-                          : "border-slate-200 hover:border-slate-300"
+                          : "border-slate-200 hover:border-slate-300",
                       )}
                     >
                       <div
@@ -189,7 +189,7 @@ export function ShareBoardModal({
                           "w-8 h-8 rounded-lg flex items-center justify-center mx-auto mb-1",
                           role === r
                             ? "bg-gray-900 text-white"
-                            : "bg-slate-100 text-slate-500"
+                            : "bg-slate-100 text-slate-500",
                         )}
                       >
                         <Icon className="w-4 h-4" />
@@ -197,7 +197,7 @@ export function ShareBoardModal({
                       <span
                         className={cn(
                           "text-xs font-semibold capitalize block",
-                          role === r ? "text-gray-900" : "text-slate-700"
+                          role === r ? "text-gray-900" : "text-slate-700",
                         )}
                       >
                         {r}
@@ -263,6 +263,8 @@ export function ShareBoardModal({
               collaborators.map((collaborator) => {
                 const RoleIcon =
                   roleIcons[collaborator.role as keyof typeof roleIcons] || Eye;
+                const collaboratorEmail =
+                  collaborator.email || collaborator.user_profile?.email || "";
                 return (
                   <div
                     key={collaborator.id}
@@ -272,7 +274,7 @@ export function ShareBoardModal({
                       {collaborator.user_profile?.name
                         ?.charAt(0)
                         .toUpperCase() ||
-                        collaborator.email?.charAt(0).toUpperCase() ||
+                        collaboratorEmail?.charAt(0).toUpperCase() ||
                         "?"}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -280,7 +282,7 @@ export function ShareBoardModal({
                         {collaborator.user_profile?.name || "Pending"}
                       </p>
                       <p className="text-sm text-slate-500 truncate">
-                        {collaborator.email}
+                        {collaboratorEmail || "Pending"}
                       </p>
                     </div>
                     <Badge
@@ -288,7 +290,7 @@ export function ShareBoardModal({
                         "border font-medium",
                         roleColors[
                           collaborator.role as keyof typeof roleColors
-                        ] || roleColors.viewer
+                        ] || roleColors.viewer,
                       )}
                     >
                       <RoleIcon className="w-3 h-3 mr-1" />
@@ -298,7 +300,7 @@ export function ShareBoardModal({
                       onClick={() =>
                         handleRemoveCollaborator(
                           collaborator.id,
-                          collaborator.email || "User"
+                          collaboratorEmail || "User",
                         )
                       }
                       className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"

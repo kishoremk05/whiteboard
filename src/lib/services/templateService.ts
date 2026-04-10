@@ -1,4 +1,4 @@
-// import { supabase } from '../supabase';
+import { supabase } from '../supabase';
 import type { DbTemplate, WhiteboardInsert } from '../../types/database.types';
 import { createWhiteboard } from './whiteboardService';
 
@@ -62,7 +62,7 @@ export async function getTemplateCategories(): Promise<string[]> {
 
     if (error) throw error;
 
-    const categories = [...new Set((data || []).map(t => t.category).filter(Boolean))] as string[];
+    const categories = [...new Set((data || []).map((t: { category: string | null }) => t.category).filter(Boolean))] as string[];
     return categories.sort();
 }
 

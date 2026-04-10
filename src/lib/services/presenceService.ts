@@ -1,4 +1,4 @@
-// import { supabase } from '../supabase';
+import { supabase } from '../supabase';
 import type { BoardPresence } from '../../types/database.types';
 
 /**
@@ -166,7 +166,7 @@ export function useBroadcastPresence(
             const state = channel.presenceState();
             onPresenceSync(state as unknown as Record<string, { cursor_x: number; cursor_y: number; name: string }[]>);
         })
-        .subscribe(async (status) => {
+        .subscribe(async (status: string) => {
             if (status === 'SUBSCRIBED') {
                 await channel.track({
                     cursor_x: 0,

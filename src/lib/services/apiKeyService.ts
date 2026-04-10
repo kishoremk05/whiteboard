@@ -1,4 +1,4 @@
-// import { supabase } from "../supabase";
+import { supabase } from "../supabase";
 
 // Save user's Gemini API key to Supabase
 export async function saveUserApiKey(apiKey: string): Promise<{ success: boolean; error?: string }> {

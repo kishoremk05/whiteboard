@@ -22,13 +22,13 @@ import type { ReactNode } from "react";
 
 // Mock whiteboard service functions
 const fetchUserWhiteboards = async (
-  userId: string,
+  _userId: string,
 ): Promise<DbWhiteboard[]> => [];
 const fetchSharedWhiteboards = async (
-  userId: string,
+  _userId: string,
 ): Promise<DbWhiteboard[]> => [];
 const fetchDeletedWhiteboards = async (
-  userId: string,
+  _userId: string,
 ): Promise<DbWhiteboard[]> => [];
 const createWhiteboardService = async (data: any): Promise<DbWhiteboard> => ({
   id: `wb-${Date.now()}`,
@@ -39,16 +39,17 @@ const createWhiteboardService = async (data: any): Promise<DbWhiteboard> => ({
   data: data.data || {},
 });
 const updateWhiteboardService = async (
-  id: string,
-  data: any,
+  _id: string,
+  _data: any,
 ): Promise<void> => {};
-const deleteWhiteboardService = async (id: string): Promise<void> => {};
-const restoreWhiteboardService = async (id: string): Promise<void> => {};
+const deleteWhiteboardService = async (_id: string): Promise<void> => {};
+const restoreWhiteboardService = async (_id: string): Promise<void> => {};
 const permanentlyDeleteWhiteboardService = async (
-  id: string,
+  _id: string,
 ): Promise<void> => {};
 const duplicateWhiteboardService = async (
-  id: string,
+  _id: string,
+  _userId: string,
 ): Promise<DbWhiteboard> => ({
   id: `wb-${Date.now()}`,
   title: "Copy of Board",
@@ -106,12 +107,18 @@ export interface Board {
   isFavorite: boolean;
   isDeleted: boolean;
   deletedAt?: string;
-  tags: any[];
+  tags: BoardTag[];
 
   collaborators: Collaborator[];
   template?: string;
   data?: unknown;
   isShared?: boolean;
+}
+
+export interface BoardTag {
+  id: string;
+  name: string;
+  color: string;
 }
 
 export interface Collaborator {
@@ -567,10 +574,12 @@ export function BoardProvider({ children }: { children: ReactNode }) {
   const createFolder = async (name: string): Promise<Folder> => {
     if (!user?.id) throw new Error("Not authenticated");
 
-    const folderData: FolderInsert = {
+    const _folderData: FolderInsert = {
       name,
       user_id: user.id,
     };
+
+    void _folderData;
 
     // Mock folder creation
     const data: Folder = {

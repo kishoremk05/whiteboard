@@ -163,7 +163,7 @@ export function Team() {
     }
   };
 
-  const handleAcceptInvitation = async (invitationId: string) => {
+  const handleAcceptInvitation = async (_invitationId: string) => {
     // Mock invitation acceptance
     const result = { success: true };
     if (result.success) {
@@ -176,7 +176,7 @@ export function Team() {
     }
   };
 
-  const handleDeclineInvitation = async (invitationId: string) => {
+  const handleDeclineInvitation = async (_invitationId: string) => {
     // Mock invitation decline
     const result = { success: true };
     if (result.success) {
@@ -187,7 +187,7 @@ export function Team() {
     }
   };
 
-  const handleCancelInvitation = async (invitationId: string) => {
+  const handleCancelInvitation = async (_invitationId: string) => {
     // Mock invitation cancellation
     const result = { success: true };
     if (result.success) {
@@ -198,7 +198,7 @@ export function Team() {
     }
   };
 
-  const handleResendInvitation = async (invitationId: string) => {
+  const handleResendInvitation = async (_invitationId: string) => {
     // Mock invitation resend
     const result = { success: true };
     if (result.success) {
@@ -213,7 +213,7 @@ export function Team() {
     toast.success("Invite link copied to clipboard");
   };
 
-  const handleRemoveMember = async (userId: string, userName: string) => {
+  const handleRemoveMember = async (_userId: string, userName: string) => {
     if (!currentOrganization?.id) {
       toast.error("No organization selected");
       return;
@@ -700,7 +700,7 @@ export function Team() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-slate-900">
-                          {invitation.inviteeEmail}
+                          {invitation.email}
                         </p>
                         <p className="text-sm text-slate-500">
                           Sent{" "}

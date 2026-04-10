@@ -1,5 +1,4 @@
-// import { supabase } from '../supabase';
-// import type { CollaboratorRecord, CollaboratorInsert, CollaboratorUpdate } from '../../types/database.types';
+import type { CollaboratorRecord } from '../../types/database.types';
 
 // Mock types
 interface CollaboratorRecord {
@@ -11,22 +10,13 @@ interface CollaboratorRecord {
   updated_at: string;
 }
 
-interface CollaboratorInsert {
-  whiteboard_id: string;
-  user_id: string;
-  role: 'editor' | 'viewer' | 'admin';
-}
-
-interface CollaboratorUpdate {
-  role?: 'editor' | 'viewer' | 'admin';
-}
-
 /**
  * Collaborator Service
  * Manage board sharing and collaboration
  */
 
 export interface CollaboratorWithUser extends CollaboratorRecord {
+    email?: string;
     user_profile?: {
         name: string;
         email: string;
@@ -36,7 +26,7 @@ export interface CollaboratorWithUser extends CollaboratorRecord {
 /**
  * Fetch all collaborators for a whiteboard
  */
-export async function fetchCollaborators(whiteboardId: string): Promise<CollaboratorWithUser[]> {
+export async function fetchCollaborators(_whiteboardId: string): Promise<CollaboratorWithUser[]> {
     // Mock implementation
     return [];
 }
@@ -100,7 +90,7 @@ export async function generateInviteCode(
 /**
  * Join a whiteboard using an invite code
  */
-export async function joinByInviteCode(inviteCode: string, userId: string, email: string): Promise<CollaboratorRecord> {
+export async function joinByInviteCode(_inviteCode: string, userId: string, _email: string): Promise<CollaboratorRecord> {
     // Mock implementation
     return {
         id: `collab-${Date.now()}`,
@@ -116,8 +106,8 @@ export async function joinByInviteCode(inviteCode: string, userId: string, email
  * Check if a user has access to a whiteboard
  */
 export async function checkAccess(
-    whiteboardId: string,
-    userId: string
+    _whiteboardId: string,
+    _userId: string
 ): Promise<{ hasAccess: boolean; role: string | null }> {
     // Mock implementation - always return owner access
     return { hasAccess: true, role: 'owner' };
@@ -126,7 +116,7 @@ export async function checkAccess(
 /**
  * Get all whiteboards a user has access to (owned + shared)
  */
-export async function getAccessibleWhiteboards(userId: string): Promise<string[]> {
+export async function getAccessibleWhiteboards(_userId: string): Promise<string[]> {
     // Mock implementation
     return [];
 }

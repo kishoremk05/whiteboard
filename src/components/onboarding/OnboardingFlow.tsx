@@ -82,7 +82,7 @@ const templateColors: Record<string, string> = {
 export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   const navigate = useNavigate();
   // const { user } = useAuth();
-  const user = null; // Mock user
+  const user: { name?: string } | null = null; // Mock user
   const { createBoard } = useBoards();
   const [step, setStep] = useState<Step>("welcome");
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);

@@ -14,7 +14,7 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   // const { user } = useAuth();
-  const user = null; // Mock user for now
+  const user: { preferences?: { theme?: Theme } } | null = null; // Mock user for now
   const [theme, setThemeState] = useState<Theme>("system");
   const [effectiveTheme, setEffectiveTheme] = useState<"light" | "dark">(
     "light",

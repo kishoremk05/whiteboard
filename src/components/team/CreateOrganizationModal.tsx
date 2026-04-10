@@ -49,14 +49,8 @@ export function CreateOrganizationModal({
 
       const slug = generateSlug(orgName);
 
-      // Mock organization data
-      const newOrg = {
-        id: `org-${Date.now()}`,
-        name: orgName.trim(),
-        slug,
-        owner_id: "mock-user-id",
-        subscription: "free",
-      };
+      // Simulate that generated values are used by backend integration.
+      void slug;
 
       toast.success("Organization created successfully!");
       setOrgName("");

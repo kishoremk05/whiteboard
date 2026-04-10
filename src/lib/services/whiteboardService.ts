@@ -1,4 +1,4 @@
-// import { supabase } from '../supabase';
+import { supabase } from '../supabase';
 import type { DbWhiteboard, WhiteboardInsert, WhiteboardUpdate } from '../../types/database.types';
 
 /**
@@ -39,7 +39,7 @@ export async function fetchSharedWhiteboards(userId: string): Promise<DbWhiteboa
 
         if (!data || data.length === 0) return [];
 
-        const whiteboardIds = data.map(c => c.whiteboard_id).filter(Boolean) as string[];
+        const whiteboardIds = data.map((c: { whiteboard_id: string | null }) => c.whiteboard_id).filter(Boolean) as string[];
 
         if (whiteboardIds.length === 0) return [];
 
